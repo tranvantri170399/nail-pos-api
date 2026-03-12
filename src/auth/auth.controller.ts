@@ -15,8 +15,8 @@ export class AuthController {
   @Post('set-pin/:staffId')
   setPin(
     @Param('staffId') staffId: string,
-    @Body('pin') pin: string,
+    @Body() body: { pin: string },  // ← Sửa chỗ này
   ) {
-    return this.authService.setPin(+staffId, pin);
+    return this.authService.setPin(+staffId, body.pin);
   }
 }
