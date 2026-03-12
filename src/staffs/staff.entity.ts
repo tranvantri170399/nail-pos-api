@@ -11,6 +11,9 @@ export class Staff {
   @Column({ nullable: true })
   phone: string;
 
+  @Column({ nullable: true })  // ← Thêm dòng này
+  pin_code: string;
+
   @Column({ default: '#FF6B9D' })
   color: string;
 
