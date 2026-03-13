@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Staff } from '../staffs/staff.entity';
+import { Owner } from '../owners/owner.entity';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -10,42 +11,80 @@ export class AuthService {
   constructor(
     @InjectRepository(Staff)
     private staffRepo: Repository<Staff>,
+
+    @InjectRepository(Owner)          // ← Thêm
+    private ownerRepo: Repository<Owner>,
+
     private jwtService: JwtService,
   ) {}
 
-  // Login bằng phone + pin_code
-  async login(phone: string, pin: string) {
+  // ── LOGIN NHÂN VIÊN (phone + PIN 4 số) ──────────────────
+  async loginStaff(phone: string, pin: string) {
     const staff = await this.staffRepo.findOne({ where: { phone } });
-
     if (!staff) throw new UnauthorizedException('Số điện thoại không tồn tại');
     if (!staff.is_active) throw new UnauthorizedException('Tài khoản đã bị khoá');
 
-    // So sánh PIN (bcrypt)
     const isMatch = await bcrypt.compare(pin, staff.pin_code);
     if (!isMatch) throw new UnauthorizedException('PIN không đúng');
 
-    // Tạo JWT token
-    const payload = { sub: staff.id, name: staff.name, role: staff.role };
+    const payload = {
+      sub: staff.id,
+      name: staff.name,
+      role: staff.role,
+      type: 'staff',       // ← Phân biệt loại user
+    };
+
     return {
       access_token: this.jwtService.sign(payload),
-      staff: {
+      user: {
         id: staff.id,
         name: staff.name,
         role: staff.role,
         color: staff.color,
+        type: 'staff',
       },
     };
   }
 
-  // Set PIN lần đầu (hoặc đổi PIN)
-  async setPin(staffId: number, newPin: string) {
-    const hashed = await bcrypt.hash(newPin, 10);
-    await this.staffRepo.update(staffId, { pin_code: hashed });
-    return { message: 'PIN đã được cập nhật' };
+  // ── LOGIN CHỦ TIỆM (phone + password) ───────────────────
+  async loginOwner(phone: string, password: string) {
+    const owner = await this.ownerRepo.findOne({ where: { phone } });
+    if (!owner) throw new UnauthorizedException('Số điện thoại không tồn tại');
+    if (!owner.is_active) throw new UnauthorizedException('Tài khoản đã bị khoá');
+
+    const isMatch = await bcrypt.compare(password, owner.password);
+    if (!isMatch) throw new UnauthorizedException('Mật khẩu không đúng');
+
+    const payload = {
+      sub: owner.id,
+      name: owner.name,
+      role: 'owner',
+      type: 'owner',       // ← Phân biệt loại user
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: owner.id,
+        name: owner.name,
+        salon_name: owner.salon_name,
+        role: 'owner',
+        type: 'owner',
+      },
+    };
   }
 
-  // Verify token (dùng cho guard)
-  verifyToken(token: string) {
-    return this.jwtService.verify(token);
+  // ── SET PASSWORD CHO OWNER ───────────────────────────────
+  async setOwnerPassword(ownerId: number, password: string) {
+    const hashed = await bcrypt.hash(password, 10);
+    await this.ownerRepo.update(ownerId, { password: hashed });
+    return { message: 'Mật khẩu đã được cập nhật' };
+  }
+
+  // ── SET PIN CHO STAFF ────────────────────────────────────
+  async setPin(staffId: number, pin: string) {
+    const hashed = await bcrypt.hash(pin, 10);
+    await this.staffRepo.update(staffId, { pin_code: hashed });
+    return { message: 'PIN đã được cập nhật' };
   }
 }
