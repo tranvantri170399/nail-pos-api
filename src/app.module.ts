@@ -7,6 +7,9 @@ import { CustomersModule } from './customers/customers.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { AuthModule } from './auth/auth.module';
 import { OwnersModule } from './owners/owners.module';
+import { SalonsModule } from './salons/salons.module';
+import { ServiceCategoriesModule } from './service-categories/service-categories.module';
+import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
   imports: [
@@ -32,6 +35,10 @@ import { OwnersModule } from './owners/owners.module';
     AppointmentsModule,
     AuthModule,
     OwnersModule,
+    SalonsModule,
+    ServiceCategoriesModule,
+    TransactionsModule,
+    
   ],
 })
 export class AppModule { }
