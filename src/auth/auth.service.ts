@@ -22,9 +22,8 @@ export class AuthService {
   async loginStaff(phone: string, pin: string) {
     const staff = await this.staffRepo.findOne({ where: { phone } });
     if (!staff) throw new UnauthorizedException('Số điện thoại không tồn tại');
-    if (!staff.is_active) throw new UnauthorizedException('Tài khoản đã bị khoá');
-
-    const isMatch = await bcrypt.compare(pin, staff.pin_code);
+    if (!staff.isActive) throw new UnauthorizedException('Tài khoản đã bị khoá');
+    const isMatch = await bcrypt.compare(pin, staff.pinCode); // ✅ pinCode
     if (!isMatch) throw new UnauthorizedException('PIN không đúng');
 
     const payload = {
@@ -38,6 +37,7 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
       user: {
         id: staff.id,
+        salon_id: staff.salonId, // ✅ thêm salon_id
         name: staff.name,
         role: staff.role,
         color: staff.color,
@@ -50,7 +50,8 @@ export class AuthService {
   async loginOwner(phone: string, password: string) {
     const owner = await this.ownerRepo.findOne({ where: { phone } });
     if (!owner) throw new UnauthorizedException('Số điện thoại không tồn tại');
-    if (!owner.is_active) throw new UnauthorizedException('Tài khoản đã bị khoá');
+    
+    if (!owner.is_active) throw new UnauthorizedException('Tài khoản đã bị khoá'); // ✅ isActive
 
     const isMatch = await bcrypt.compare(password, owner.password);
     if (!isMatch) throw new UnauthorizedException('Mật khẩu không đúng');
@@ -84,7 +85,7 @@ export class AuthService {
   // ── SET PIN CHO STAFF ────────────────────────────────────
   async setPin(staffId: number, pin: string) {
     const hashed = await bcrypt.hash(pin, 10);
-    await this.staffRepo.update(staffId, { pin_code: hashed });
+    await this.staffRepo.update(staffId, { pinCode: hashed });
     return { message: 'PIN đã được cập nhật' };
   }
 }
