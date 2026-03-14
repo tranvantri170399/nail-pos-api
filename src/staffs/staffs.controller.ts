@@ -1,4 +1,5 @@
-import { Controller, Get } from '@nestjs/common';
+// staffs/staffs.controller.ts
+import { Controller, Get, Query, ParseIntPipe } from '@nestjs/common';
 import { StaffsService } from './staffs.service';
 
 @Controller('staffs')
@@ -6,7 +7,7 @@ export class StaffsController {
   constructor(private readonly staffsService: StaffsService) {}
 
   @Get()
-  findAll() {
-    return this.staffsService.findAll();
+  findAll(@Query('salonId', ParseIntPipe) salonId: number) {  // ← thêm
+    return this.staffsService.findBySalon(salonId);
   }
 }

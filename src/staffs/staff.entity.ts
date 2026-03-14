@@ -1,9 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+// staffs/staff.entity.ts
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('staffs')
 export class Staff {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ name: 'salon_id', nullable: true })
+  salonId: number;  // ← phải có field này
 
   @Column()
   name: string;
@@ -11,18 +15,18 @@ export class Staff {
   @Column({ nullable: true })
   phone: string;
 
-  @Column({ nullable: true })  // ← Thêm dòng này
-  pin_code: string;
+  @Column({ name: 'pin_code', nullable: true })
+  pinCode: string;
 
-  @Column({ default: '#FF6B9D' })
+  @Column({ nullable: true })
   color: string;
 
   @Column({ default: 'junior' })
   role: string;
 
-  @Column({ default: true })
-  is_active: boolean;
+  @Column({ name: 'commission_rate', type: 'numeric', default: 0 })
+  commissionRate: number;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @Column({ name: 'is_active', default: true })
+  isActive: boolean;
 }
