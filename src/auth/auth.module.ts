@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { Staff } from '../staffs/staff.entity';
 import { Owner } from '../owners/owner.entity';  // ← Thêm
+import { Salon } from 'src/salons/salon.entity';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { Owner } from '../owners/owner.entity';  // ← Thêm
       secret: process.env.JWT_SECRET || 'nail-pos-secret',
       signOptions: { expiresIn: '7d' },
     }),
-    TypeOrmModule.forFeature([Staff, Owner]),  // ← Thêm Owner
+    TypeOrmModule.forFeature([Staff, Owner, Salon]),  // ← Thêm Owner
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
