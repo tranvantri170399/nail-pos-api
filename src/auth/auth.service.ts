@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { Staff } from '../staffs/staff.entity';
 import { Owner } from '../owners/owner.entity';
 import * as bcrypt from 'bcryptjs';
+import { Salon } from 'src/salons/salon.entity';
 
 @Injectable()
 export class AuthService {
@@ -14,6 +15,9 @@ export class AuthService {
 
     @InjectRepository(Owner)          // ← Thêm
     private ownerRepo: Repository<Owner>,
+
+    @InjectRepository(Salon)
+    private salonRepo: Repository<Salon>,
 
     private jwtService: JwtService,
   ) {}
@@ -55,12 +59,15 @@ export class AuthService {
 
     const isMatch = await bcrypt.compare(password, owner.password);
     if (!isMatch) throw new UnauthorizedException('Mật khẩu không đúng');
+    // 🔹 Lấy salon của owner
+    const salon = await this.salonRepo.findOne({ where: { ownerId: owner.id },});
 
     const payload = {
       sub: owner.id,
       name: owner.name,
       role: 'owner',
       type: 'owner',       // ← Phân biệt loại user
+      salonId: salon?.id, // thêm để client lấy salon id
     };
 
     return {
@@ -71,6 +78,8 @@ export class AuthService {
         salon_name: owner.salon_name,
         role: 'owner',
         type: 'owner',
+        salonId: salon?.id,
+        salonName: salon?.name,
       },
     };
   }
