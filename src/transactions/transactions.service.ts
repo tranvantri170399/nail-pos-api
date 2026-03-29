@@ -13,24 +13,47 @@ export class TransactionsService {
   ) {}
 
   async create(body: any): Promise<Transaction> {
+    console.log('Received body:', body);
+    console.log('appointmentId:', body.appointmentId);
+    console.log('appointment_id:', body.appointment_id);
+
     return this.dataSource.transaction(async manager => {
       const total = body.subtotal
         - (body.discountAmount ?? 0)
         + (body.tipAmount ?? 0)
         + (body.taxAmount ?? 0);
 
+      console.log('Calculated total:', total);
+
       const items = body.items.map((item: any) => ({
-        ...item,
-        commissionAmount: (item.price * item.commissionRate) / 100,
+        serviceId: item.service_id,
+        staffId: item.staff_id,
+        serviceName: item.service_name,
+        price: item.price,
+        commissionRate: item.commission_rate,
+        commissionAmount: (item.price * item.commission_rate) / 100,
       }));
 
-      return manager.save(Transaction, manager.create(Transaction, {
-        ...body,
+      console.log('Processed items:', items);
+
+      const transactionData = {
+        appointmentId: body.appointment_id || null,
+        salonId: body.salon_id,
+        subtotal: body.subtotal,
+        discountAmount: body.discount_amount || 0,
+        tipAmount: body.tip_amount || 0,
+        taxAmount: body.tax_amount || 0,
         totalAmount: total,
+        paymentMethod: body.payment_method,
         status: 'paid',
+        note: body.note,
         paidAt: new Date(),
         items,
-      }));
+      };
+
+      console.log('Final transaction data:', transactionData);
+
+      return manager.save(Transaction, manager.create(Transaction, transactionData));
     });
   }
 
