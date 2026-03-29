@@ -7,7 +7,7 @@ export class Transaction {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'appointment_id' })
+  @Column({ name: 'appointment_id', nullable: true })
   appointmentId: number;
 
   @Column({ name: 'salon_id' })
