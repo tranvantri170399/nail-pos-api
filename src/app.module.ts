@@ -5,6 +5,7 @@ import { StaffsModule } from './staffs/staffs.module';
 import { ServicesModule } from './services/services.module';
 import { CustomersModule } from './customers/customers.module';
 import { AppointmentsModule } from './appointments/appointments.module';
+import { AppointmentServicesModule } from './appointment-services/appointment-services.module';
 import { AuthModule } from './auth/auth.module';
 import { OwnersModule } from './owners/owners.module';
 import { SalonsModule } from './salons/salons.module';
@@ -33,6 +34,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     ServicesModule,
     CustomersModule,
     AppointmentsModule,
+    AppointmentServicesModule,
     AuthModule,
     OwnersModule,
     SalonsModule,
