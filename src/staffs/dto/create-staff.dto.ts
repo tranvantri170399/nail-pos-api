@@ -1,0 +1,33 @@
+import { Type } from 'class-transformer';
+import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, Min, MinLength } from 'class-validator';
+
+export class CreateStaffDto {
+  @IsInt()
+  @Type(() => Number)
+  salonId: number;
+
+  @IsString()
+  @MinLength(2)
+  name: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  color?: string;
+
+  @IsString()
+  role: string;
+
+  @IsNumber()
+  @Type(() => Number)
+  @Min(0)
+  commissionRate: number;
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  isActive?: boolean;
+}

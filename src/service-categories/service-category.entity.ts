@@ -1,6 +1,6 @@
 // service-categories/service-category.entity.ts
-import { Salon } from 'src/salons/salon.entity';
-import { Service } from 'src/services/service.entity';
+import { Salon } from '../salons/salon.entity';
+import { Service } from '../services/service.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn } from 'typeorm';
 
 @Entity('service_categories')

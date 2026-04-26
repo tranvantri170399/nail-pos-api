@@ -14,6 +14,9 @@ export class Appointment {
   @Column({ nullable: true })
   staff_id: number;
 
+  @Column({ name: 'salon_id', nullable: true })
+  salon_id: number;
+
   @Column()
   scheduled_date: string;
 

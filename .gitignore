@@ -42,6 +42,9 @@ lerna-debug.log*
 .env.production.local
 .env.local
 
+# TypeORM data-source (contains DB credentials)
+data-source.ts
+
 # temp directory
 .temp
 .tmp

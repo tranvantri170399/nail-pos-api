@@ -1,10 +1,13 @@
 // salons/salons.controller.ts
-import { Controller, Get, Post, Patch, Body, Param, Query, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { SalonsService } from './salons.service';
 import { Salon } from './salon.entity';
 
+@UseGuards(JwtAuthGuard)
 @Controller('salons')
 export class SalonsController {
+
   constructor(private readonly service: SalonsService) {}
 
   @Get()

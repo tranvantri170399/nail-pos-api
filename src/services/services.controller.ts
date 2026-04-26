@@ -1,8 +1,12 @@
 // services/services.controller.ts
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { ServicesService } from './services.service';
 import { Service } from './service.entity';
+import { CreateServiceDto } from './dto/create-service.dto';
+import { UpdateServiceDto } from './dto/update-service.dto';
 
+@UseGuards(JwtAuthGuard)
 @Controller('services')
 export class ServicesController {
   constructor(private readonly service: ServicesService) {}
@@ -27,13 +31,13 @@ export class ServicesController {
 
   // POST /services
   @Post()
-  create(@Body() body: Partial<Service>) {
+  create(@Body() body: CreateServiceDto) {
     return this.service.create(body);
   }
 
   // PATCH /services/:id
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() body: Partial<Service>) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateServiceDto) {
     return this.service.update(id, body);
   }
 

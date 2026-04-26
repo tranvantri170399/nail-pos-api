@@ -5,6 +5,9 @@ export class Customer {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ name: 'salon_id', nullable: true })
+  salon_id: number;
+
   @Column()
   name: string;
 

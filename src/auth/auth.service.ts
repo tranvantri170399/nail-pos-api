@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { Staff } from '../staffs/staff.entity';
 import { Owner } from '../owners/owner.entity';
 import * as bcrypt from 'bcryptjs';
-import { Salon } from 'src/salons/salon.entity';
+import { Salon } from '../salons/salon.entity';
 
 @Injectable()
 export class AuthService {

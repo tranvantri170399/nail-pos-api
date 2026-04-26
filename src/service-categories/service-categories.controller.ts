@@ -1,10 +1,15 @@
 // service-categories/service-categories.controller.ts
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { ServiceCategoriesService } from './service-categories.service';
 import { ServiceCategory } from './service-category.entity';
+import { CreateServiceCategoryDto } from './dto/create-service-category.dto';
+import { UpdateServiceCategoryDto } from './dto/update-service-category.dto';
 
+@UseGuards(JwtAuthGuard)
 @Controller('service-categories')
 export class ServiceCategoriesController {
+
   constructor(private readonly service: ServiceCategoriesService) {}
 
   @Get()
@@ -18,12 +23,12 @@ export class ServiceCategoriesController {
   }
 
   @Post()
-  create(@Body() body: Partial<ServiceCategory>) {
+  create(@Body() body: CreateServiceCategoryDto) {
     return this.service.create(body);
   }
 
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() body: Partial<ServiceCategory>) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateServiceCategoryDto) {
     return this.service.update(id, body);
   }
 

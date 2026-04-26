@@ -7,7 +7,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { Staff } from '../staffs/staff.entity';
 import { Owner } from '../owners/owner.entity';  // ← Thêm
-import { Salon } from 'src/salons/salon.entity';
+import { Salon } from '../salons/salon.entity';
 
 @Module({
   imports: [
