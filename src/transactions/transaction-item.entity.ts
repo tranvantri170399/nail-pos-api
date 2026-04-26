@@ -7,7 +7,7 @@ export class TransactionItem {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'transaction_id' })
+  @Column({ name: 'transaction_id', nullable: true })
   transactionId: number;
 
   @Column({ name: 'service_id', nullable: true })

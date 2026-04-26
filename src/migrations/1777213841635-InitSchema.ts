@@ -46,7 +46,7 @@ export class InitSchema1777213841635 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "transaction_items" ADD "id" SERIAL NOT NULL`);
         await queryRunner.query(`ALTER TABLE "transaction_items" ADD CONSTRAINT "PK_ff5a487ad820dccafd53bebf578" PRIMARY KEY ("id")`);
         await queryRunner.query(`ALTER TABLE "transaction_items" DROP COLUMN "transaction_id"`);
-        await queryRunner.query(`ALTER TABLE "transaction_items" ADD "transaction_id" integer NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "transaction_items" ADD "transaction_id" integer`);
         await queryRunner.query(`ALTER TABLE "transaction_items" DROP COLUMN "service_id"`);
         await queryRunner.query(`ALTER TABLE "transaction_items" ADD "service_id" integer`);
         await queryRunner.query(`ALTER TABLE "transaction_items" DROP COLUMN "staff_id"`);
