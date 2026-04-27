@@ -49,7 +49,7 @@ export class Appointment {
   @JoinColumn({ name: 'customer_id' })
   customer: Customer;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 
   @OneToMany(() => AppointmentService, appointmentService => appointmentService.appointment)

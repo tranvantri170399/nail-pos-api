@@ -71,7 +71,7 @@ export class TransactionsService {
       .where('t.salon_id = :salonId', { salonId })
       .andWhere('t.status = :status', { status: 'paid' });
 
-    if (date) query.andWhere('DATE(t.paid_at) = :date', { date });
+    if (date) query.andWhere(`DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') = :date`, { date });
 
     return query.orderBy('t.paid_at', 'DESC').getMany();
   }
@@ -92,7 +92,7 @@ export class TransactionsService {
       .addSelect('COUNT(*)', 'totalTransactions')
       .where('t.salon_id = :salonId', { salonId })
       .andWhere('t.status = :status', { status: 'paid' })
-      .andWhere('DATE(t.paid_at) = :date', { date })
+      .andWhere(`DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') = :date`, { date })
       .getRawOne();
 
     return {
@@ -124,7 +124,7 @@ export class TransactionsService {
         LEFT JOIN staffs s ON s.id = ti.staff_id
         WHERE t.salon_id = $1
           AND t.status = 'paid'
-          AND DATE(t.paid_at) = $2
+          AND DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') = $2
         GROUP BY ti.staff_id, s.name
         ORDER BY "commissionAmount" DESC
       `,

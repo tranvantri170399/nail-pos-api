@@ -37,10 +37,10 @@ export class Transaction {
   @Column({ nullable: true })
   note: string;
 
-  @Column({ name: 'paid_at', nullable: true })
+  @Column({ name: 'paid_at', nullable: true, type: 'timestamptz' })
   paidAt: Date;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
   @OneToMany(() => TransactionItem, item => item.transaction, { cascade: true })

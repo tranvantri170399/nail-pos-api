@@ -26,6 +26,6 @@ export class Customer {
   @Column({ default: 0 })
   total_spent: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 }
