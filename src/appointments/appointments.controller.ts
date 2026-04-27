@@ -1,35 +1,58 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
+import { SalonAccessGuard } from '../common/guards/salon-access.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, SalonAccessGuard)
 @Controller('appointments')
 export class AppointmentsController {
 
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
   @Get()
-  findAll() { return this.appointmentsService.findAll(); }
+  findAll(
+    @CurrentUser() user: any,
+    @Query() pagination: PaginationDto,
+    @Query('salonId') querySalonId?: string,
+  ) {
+    const salonId = user.type === 'owner' && querySalonId
+      ? Number(querySalonId)
+      : user.salonId;
+    return this.appointmentsService.findBySalon(salonId, pagination);
+  }
 
   @Get('by-date')
-  findByDate(@Query('date') date: string) {
-    return this.appointmentsService.findByDate(date);
+  findByDate(
+    @CurrentUser() user: any,
+    @Query('date') date: string,
+    @Query('salonId') querySalonId?: string,
+  ) {
+    const salonId = user.type === 'owner' && querySalonId
+      ? Number(querySalonId)
+      : user.salonId;
+    return this.appointmentsService.findByDate(salonId, date);
   }
 
   @Post()
-  create(@Body() body: CreateAppointmentDto) {
-    return this.appointmentsService.create(body);
+  create(@CurrentUser() user: any, @Body() body: CreateAppointmentDto) {
+    return this.appointmentsService.create(body, user.salonId);
   }
 
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body() body: UpdateAppointmentStatusDto) {
-    return this.appointmentsService.updateStatus(+id, body.status);
+  updateStatus(
+    @CurrentUser() user: any,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdateAppointmentStatusDto,
+  ) {
+    return this.appointmentsService.updateStatus(id, body.status, user.salonId);
   }
 
   @Delete(':id')
-  delete(@Param('id') id: string) {
-    return this.appointmentsService.delete(+id);
+  delete(@CurrentUser() user: any, @Param('id', ParseIntPipe) id: number) {
+    return this.appointmentsService.delete(id, user.salonId);
   }
 }

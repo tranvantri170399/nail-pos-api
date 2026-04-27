@@ -22,6 +22,24 @@ export class TransactionItem {
   @Column({ type: 'numeric', default: 0 })
   price: number;
 
+  // ── Discount per item ─────────────────────────
+  @Column({ name: 'discount_type', nullable: true })
+  discountType: string; // 'percentage' | 'fixed' | null
+
+  @Column({ name: 'discount_value', type: 'numeric', default: 0 })
+  discountValue: number;
+
+  @Column({ name: 'discount_amount', type: 'numeric', default: 0 })
+  discountAmount: number;
+
+  @Column({ name: 'discount_reason', nullable: true })
+  discountReason: string;
+
+  // ── Tip per staff ─────────────────────────────
+  @Column({ name: 'tip_amount', type: 'numeric', default: 0 })
+  tipAmount: number;
+
+  // ── Commission ────────────────────────────────
   @Column({ name: 'commission_rate', type: 'numeric', default: 0 })
   commissionRate: number;
 

@@ -1,5 +1,5 @@
 // service-categories/service-categories.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ServiceCategory } from './service-category.entity';
@@ -19,9 +19,12 @@ export class ServiceCategoriesService {
     });
   }
 
-  async findOne(id: number): Promise<ServiceCategory> {
+  async findOne(id: number, salonId?: number): Promise<ServiceCategory> {
     const item = await this.repo.findOne({ where: { id }, relations: ['services'] });
     if (!item) throw new NotFoundException(`Category #${id} not found`);
+    if (salonId && item.salonId !== salonId) {
+      throw new ForbiddenException('Category does not belong to your salon');
+    }
     return item;
   }
 
@@ -29,12 +32,22 @@ export class ServiceCategoriesService {
     return this.repo.save(this.repo.create(body));
   }
 
-  async update(id: number, body: Partial<ServiceCategory>): Promise<ServiceCategory> {
+  async update(id: number, body: Partial<ServiceCategory>, salonId?: number): Promise<ServiceCategory> {
+    const item = await this.repo.findOne({ where: { id } });
+    if (!item) throw new NotFoundException(`Category #${id} not found`);
+    if (salonId && item.salonId !== salonId) {
+      throw new ForbiddenException('Category does not belong to your salon');
+    }
     await this.repo.update(id, body);
     return this.findOne(id);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number, salonId?: number): Promise<void> {
+    const item = await this.repo.findOne({ where: { id } });
+    if (!item) throw new NotFoundException(`Category #${id} not found`);
+    if (salonId && item.salonId !== salonId) {
+      throw new ForbiddenException('Category does not belong to your salon');
+    }
     await this.repo.update(id, { isActive: false });
   }
 }

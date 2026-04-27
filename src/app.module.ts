@@ -11,6 +11,7 @@ import { OwnersModule } from './owners/owners.module';
 import { SalonsModule } from './salons/salons.module';
 import { ServiceCategoriesModule } from './service-categories/service-categories.module';
 import { TransactionsModule } from './transactions/transactions.module';
+import { ShiftsModule } from './shifts/shifts.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     SalonsModule,
     ServiceCategoriesModule,
     TransactionsModule,
+    ShiftsModule,
     
   ],
 })

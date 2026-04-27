@@ -1,6 +1,7 @@
 // salons/salons.controller.ts
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { SalonsService } from './salons.service';
 import { Salon } from './salon.entity';
 
@@ -11,22 +12,32 @@ export class SalonsController {
   constructor(private readonly service: SalonsService) {}
 
   @Get()
-  findAll(@Query('ownerId', ParseIntPipe) ownerId: number) {
-    return this.service.findByOwner(ownerId);
+  findAll(@CurrentUser() user: any) {
+    if (user.type === 'owner') {
+      // Owner sees only their salons
+      return this.service.findByOwner(user.id);
+    }
+    // Staff sees only their salon
+    return this.service.findOne(user.salonId).then(s => [s]);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne(id);
+  async findOne(@CurrentUser() user: any, @Param('id', ParseIntPipe) id: number) {
+    return this.service.findOneWithAccess(id, user);
   }
 
   @Post()
-  create(@Body() body: Partial<Salon>) {
-    return this.service.create(body);
+  create(@CurrentUser() user: any, @Body() body: Partial<Salon>) {
+    // Only owners can create salons
+    return this.service.create({ ...body, ownerId: user.id });
   }
 
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() body: Partial<Salon>) {
-    return this.service.update(id, body);
+  async update(
+    @CurrentUser() user: any,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: Partial<Salon>,
+  ) {
+    return this.service.updateWithAccess(id, body, user);
   }
 }

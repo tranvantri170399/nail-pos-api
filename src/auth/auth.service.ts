@@ -34,7 +34,8 @@ export class AuthService {
       sub: staff.id,
       name: staff.name,
       role: staff.role,
-      type: 'staff',       // ← Phân biệt loại user
+      type: 'staff',
+      salonId: staff.salonId,
     };
 
     return {

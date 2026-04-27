@@ -1,10 +1,12 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Appointment } from './appointment.entity';
 import { AppointmentService } from '../appointment-services/appointment-service.entity';
 import { Staff } from '../staffs/staff.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { PaginationDto, PaginatedResult } from '../common/dto/pagination.dto';
+import { paginateRepository } from '../common/helpers/paginate.helper';
 
 @Injectable()
 export class AppointmentsService {
@@ -17,21 +19,23 @@ export class AppointmentsService {
     private staffRepo: Repository<Staff>,
   ) {}
 
-  findAll() {
-    return this.repo.find({ 
-      relations: ['staff', 'customer', 'appointmentServices', 'appointmentServices.service'] 
+  findBySalon(salonId: number, pagination: PaginationDto): Promise<PaginatedResult<Appointment>> {
+    return paginateRepository(this.repo, pagination, {
+      where: { salon_id: salonId },
+      relations: ['staff', 'customer', 'appointmentServices', 'appointmentServices.service'],
+      order: { created_at: 'DESC' },
     });
   }
 
-  findByDate(date: string) {
+  findByDate(salonId: number, date: string) {
     return this.repo.find({
-      where: { scheduled_date: date },
+      where: { salon_id: salonId, scheduled_date: date },
       relations: ['staff', 'customer', 'appointmentServices', 'appointmentServices.service'],
       order: { start_time: 'ASC' },
     });
   }
 
-  async create(data: CreateAppointmentDto) {
+  async create(data: CreateAppointmentDto, userSalonId?: number) {
     if (!data.staff_id) {
       throw new BadRequestException('staff_id is required');
     }
@@ -42,6 +46,11 @@ export class AppointmentsService {
     const staff = await this.staffRepo.findOne({ where: { id: data.staff_id } });
     if (!staff) {
       throw new NotFoundException(`Staff #${data.staff_id} not found`);
+    }
+
+    // Validate staff belongs to user's salon
+    if (userSalonId && staff.salonId !== userSalonId) {
+      throw new ForbiddenException('Staff does not belong to your salon');
     }
 
     const salonId = staff.salonId;
@@ -85,10 +94,6 @@ export class AppointmentsService {
       source: data.source,
     };
 
-    if (data.salon_id !== undefined) {
-      appointmentPayload.salon_id = data.salon_id;
-    }
-
     const appointmentServices = data.appointment_services;
 
     const apt = this.repo.create(appointmentPayload);
@@ -116,12 +121,22 @@ export class AppointmentsService {
     });
   }
 
-  async updateStatus(id: number, status: string) {
+  async updateStatus(id: number, status: string, salonId?: number) {
+    const appointment = await this.repo.findOne({ where: { id } });
+    if (!appointment) throw new NotFoundException(`Appointment #${id} not found`);
+    if (salonId && appointment.salon_id !== salonId) {
+      throw new ForbiddenException('Appointment does not belong to your salon');
+    }
     await this.repo.update(id, { status });
     return this.repo.findOne({ where: { id } });
   }
 
-  async delete(id: number) {
+  async delete(id: number, salonId?: number) {
+    const appointment = await this.repo.findOne({ where: { id } });
+    if (!appointment) throw new NotFoundException(`Appointment #${id} not found`);
+    if (salonId && appointment.salon_id !== salonId) {
+      throw new ForbiddenException('Appointment does not belong to your salon');
+    }
     // Delete related appointment services first
     await this.appointmentServiceRepo.delete({ appointmentId: id });
     
