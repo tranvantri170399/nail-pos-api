@@ -27,12 +27,14 @@ export class TransactionsController {
     @CurrentUser() user: any,
     @Query() pagination: PaginationDto,
     @Query('date') date?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
     @Query('salonId') querySalonId?: string,
   ) {
     const salonId = user.type === 'owner' && querySalonId
       ? Number(querySalonId)
       : user.salonId;
-    return this.service.findBySalon(salonId, pagination, date);
+    return this.service.findBySalon(salonId, pagination, date, startDate, endDate);
   }
 
   @Get('report')

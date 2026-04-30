@@ -230,14 +230,19 @@ export class TransactionsService {
     });
   }
 
-  async findBySalon(salonId: number, pagination: PaginationDto, date?: string): Promise<PaginatedResult<Transaction>> {
+  async findBySalon(salonId: number, pagination: PaginationDto, date?: string, startDate?: string, endDate?: string): Promise<PaginatedResult<Transaction>> {
     const query = this.repo.createQueryBuilder('t')
       .leftJoinAndSelect('t.items', 'items')
       .leftJoinAndSelect('t.payments', 'payments')
       .where('t.salon_id = :salonId', { salonId })
       .andWhere('t.status = :status', { status: 'paid' });
 
-    if (date) query.andWhere(`DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') = :date`, { date });
+    if (date) {
+      query.andWhere(`DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') = :date`, { date });
+    } else if (startDate && endDate) {
+      query.andWhere(`DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') >= :startDate`, { startDate });
+      query.andWhere(`DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') <= :endDate`, { endDate });
+    }
 
     query.addOrderBy('t.paid_at', 'DESC');
 
