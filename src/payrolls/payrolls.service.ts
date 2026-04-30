@@ -36,7 +36,6 @@ export class PayrollsService {
     return this.repo.find({
       where,
       order: { created_at: 'DESC' },
-      relations: ['staff'],
     });
   }
 
@@ -50,7 +49,6 @@ export class PayrollsService {
   async findOne(id: number, salonId: number): Promise<Payroll> {
     const payroll = await this.repo.findOne({
       where: { id },
-      relations: ['staff'],
     });
     if (!payroll) throw new NotFoundException('Payroll not found');
     if (payroll.salon_id !== salonId) {
