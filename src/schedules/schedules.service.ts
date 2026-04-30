@@ -36,7 +36,6 @@ export class SchedulesService {
     return this.repo.find({
       where,
       order: { schedule_date: 'ASC', start_time: 'ASC' },
-      relations: ['staff'],
     });
   }
 
@@ -44,14 +43,12 @@ export class SchedulesService {
     return this.repo.find({
       where: { salon_id: salonId, staff_id: staffId },
       order: { schedule_date: 'ASC', start_time: 'ASC' },
-      relations: ['staff'],
     });
   }
 
   async findOne(id: number, salonId: number): Promise<Schedule> {
     const schedule = await this.repo.findOne({
       where: { id },
-      relations: ['staff'],
     });
     if (!schedule) throw new NotFoundException('Schedule not found');
     if (schedule.salon_id !== salonId) {

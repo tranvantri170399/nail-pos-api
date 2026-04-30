@@ -33,7 +33,6 @@ export class TimeClocksService {
     return this.repo.find({
       where,
       order: { clock_in: 'DESC' },
-      relations: ['staff'],
     });
   }
 
@@ -41,7 +40,6 @@ export class TimeClocksService {
     return this.repo.find({
       where: { salon_id: salonId, staff_id: staffId },
       order: { clock_in: 'DESC' },
-      relations: ['staff'],
     });
   }
 
@@ -52,14 +50,12 @@ export class TimeClocksService {
         staff_id: staffId,
         status: 'active',
       },
-      relations: ['staff'],
     });
   }
 
   async findOne(id: number, salonId: number): Promise<TimeClock> {
     const timeClock = await this.repo.findOne({
       where: { id },
-      relations: ['staff'],
     });
     if (!timeClock) throw new NotFoundException('Time clock not found');
     if (timeClock.salon_id !== salonId) {
