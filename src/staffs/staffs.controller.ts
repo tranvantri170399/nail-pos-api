@@ -1,5 +1,5 @@
 // staffs/staffs.controller.ts
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards, Logger } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { SalonAccessGuard } from '../common/guards/salon-access.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -11,6 +11,7 @@ import { UpdateStaffDto } from './dto/update-staff.dto';
 @UseGuards(JwtAuthGuard, SalonAccessGuard)
 @Controller('staffs')
 export class StaffsController {
+  private readonly logger = new Logger(StaffsController.name);
 
   constructor(private readonly staffsService: StaffsService) {}
 
@@ -24,6 +25,9 @@ export class StaffsController {
     const salonId = user.type === 'owner' && querySalonId
       ? Number(querySalonId)
       : user.salonId;
+
+    this.logger.log(`GET /staffs - user: ${JSON.stringify({ id: user.sub, type: user.type, salonId: user.salonId })}, querySalonId: ${querySalonId}, final salonId: ${salonId}, pagination: ${JSON.stringify(pagination)}`);
+
     return this.staffsService.findBySalon(salonId, pagination);
   }
 
