@@ -244,9 +244,16 @@ export class TransactionsService {
       query.andWhere(`DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') <= :endDate`, { endDate });
     }
 
-    query.addOrderBy('t.paid_at', 'DESC');
+    const result = await paginateQueryBuilder(query, pagination);
 
-    return paginateQueryBuilder(query, pagination);
+    // Sort in JavaScript to avoid TypeORM orderBy bug with joins
+    result.data.sort((a, b) => {
+      const dateA = a.paidAt ? new Date(a.paidAt).getTime() : 0;
+      const dateB = b.paidAt ? new Date(b.paidAt).getTime() : 0;
+      return dateB - dateA; // DESC
+    });
+
+    return result;
   }
 
   async findByAppointment(appointmentId: number, salonId?: number): Promise<Transaction> {
