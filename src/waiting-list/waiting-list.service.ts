@@ -44,14 +44,12 @@ export class WaitingListService {
     return this.repo.find({
       where,
       order: { position: 'ASC', created_at: 'ASC' },
-      relations: ['staff', 'customer'],
     });
   }
 
   async findOne(id: number, salonId: number): Promise<WaitingList> {
     const waitingList = await this.repo.findOne({
       where: { id },
-      relations: ['staff', 'customer'],
     });
     if (!waitingList) throw new NotFoundException('Waiting list item not found');
     if (waitingList.salon_id !== salonId) {
