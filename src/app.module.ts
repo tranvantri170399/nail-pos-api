@@ -16,6 +16,7 @@ import { PayrollsModule } from './payrolls/payrolls.module';
 import { WaitingListModule } from './waiting-list/waiting-list.module';
 import { SchedulesModule } from './schedules/schedules.module';
 import { TimeClocksModule } from './time-clocks/time-clocks.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { TimeClocksModule } from './time-clocks/time-clocks.module';
     WaitingListModule,
     SchedulesModule,
     TimeClocksModule,
+    HealthModule,
 
   ],
 })
