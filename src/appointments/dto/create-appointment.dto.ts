@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsIn,
   IsInt,
   IsNumber,
   IsOptional,
@@ -49,6 +50,16 @@ export class CreateAppointmentDto {
   start_time: string;
 
   @IsString()
+  @IsIn(['scheduled', 'confirmed', 'in_progress', 'done', 'completed', 'cancelled', 'no_show', 'pending'])
+  status: string;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  @Min(0)
+  buffer_minutes?: number;
+
+  @IsString()
   @MinLength(4)
   end_time: string;
 
@@ -59,9 +70,6 @@ export class CreateAppointmentDto {
   @IsNumber()
   @Type(() => Number)
   total_price: number;
-
-  @IsString()
-  status: string;
 
   @IsOptional()
   @IsString()

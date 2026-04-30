@@ -29,10 +29,13 @@ export class Appointment {
   @Column()
   total_minutes: number;
 
+  @Column({ default: 0 })
+  buffer_minutes: number;
+
   @Column('numeric')
   total_price: number;
 
-  @Column({ default: 'confirmed' })
+  @Column({ default: 'scheduled' })
   status: string;
 
   @Column({ nullable: true })

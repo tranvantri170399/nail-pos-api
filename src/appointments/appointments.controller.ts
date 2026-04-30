@@ -37,6 +37,20 @@ export class AppointmentsController {
     return this.appointmentsService.findByDate(salonId, date);
   }
 
+  @Get('search')
+  search(
+    @CurrentUser() user: any,
+    @Query('q') query?: string,
+    @Query('date') date?: string,
+    @Query('status') status?: string,
+    @Query('salonId') querySalonId?: string,
+  ) {
+    const salonId = user.type === 'owner' && querySalonId
+      ? Number(querySalonId)
+      : user.salonId;
+    return this.appointmentsService.search(salonId, query, date, status);
+  }
+
   @Post()
   create(@CurrentUser() user: any, @Body() body: CreateAppointmentDto) {
     return this.appointmentsService.create(body, user.salonId);
