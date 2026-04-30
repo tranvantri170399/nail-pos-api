@@ -406,4 +406,138 @@ export class TransactionsService {
       })),
     };
   }
+
+  async getServicePopularityReport(salonId: number, startDate?: string, endDate?: string) {
+    let dateFilter = '';
+    const params: any[] = [salonId];
+
+    if (startDate && endDate) {
+      dateFilter = `AND DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') >= $2 AND DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') <= $3`;
+      params.push(startDate, endDate);
+    } else if (startDate) {
+      dateFilter = `AND DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') >= $2`;
+      params.push(startDate);
+    }
+
+    const rows = await this.dataSource.query(
+      `
+        SELECT
+          ti.service_id AS "serviceId",
+          ti.service_name AS "serviceName",
+          s.category_id AS "categoryId",
+          sc.name AS "categoryName",
+          sc.color AS "categoryColor",
+          COUNT(*) AS "serviceCount",
+          COALESCE(SUM(ti.price), 0) AS "totalRevenue",
+          COALESCE(AVG(ti.price), 0) AS "averagePrice"
+        FROM transaction_items ti
+        INNER JOIN transactions t ON t.id = ti.transaction_id
+        LEFT JOIN services s ON s.id = ti.service_id
+        LEFT JOIN service_categories sc ON sc.id = s.category_id
+        WHERE t.salon_id = $1
+          AND t.status = 'paid'
+          ${dateFilter}
+        GROUP BY ti.service_id, ti.service_name, s.category_id, sc.name, sc.color
+        ORDER BY "serviceCount" DESC
+      `,
+      params,
+    );
+
+    const totalServices = rows.reduce(
+      (sum: number, row: any) => sum + Number(row.serviceCount || 0),
+      0,
+    );
+    const totalRevenue = rows.reduce(
+      (sum: number, row: any) => sum + Number(row.totalRevenue || 0),
+      0,
+    );
+
+    return {
+      salonId,
+      startDate,
+      endDate,
+      totalServices,
+      totalRevenue,
+      items: rows.map((row: any) => ({
+        serviceId: row.serviceId ? Number(row.serviceId) : null,
+        serviceName: row.serviceName,
+        categoryId: row.categoryId ? Number(row.categoryId) : null,
+        categoryName: row.categoryName,
+        categoryColor: row.categoryColor,
+        serviceCount: Number(row.serviceCount || 0),
+        totalRevenue: Number(row.totalRevenue || 0),
+        averagePrice: Number(row.averagePrice || 0),
+        revenuePercentage: totalRevenue > 0
+          ? (Number(row.totalRevenue || 0) / totalRevenue) * 100
+          : 0,
+      })),
+    };
+  }
+
+  async getCustomerAnalyticsReport(salonId: number, startDate?: string, endDate?: string) {
+    let dateFilter = '';
+    const params: any[] = [salonId];
+
+    if (startDate && endDate) {
+      dateFilter = `AND DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') >= $2 AND DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') <= $3`;
+      params.push(startDate, endDate);
+    } else if (startDate) {
+      dateFilter = `AND DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') >= $2`;
+      params.push(startDate);
+    }
+
+    const rows = await this.dataSource.query(
+      `
+        SELECT
+          c.id AS "customerId",
+          c.name AS "customerName",
+          c.phone AS "customerPhone",
+          COALESCE(c.total_visits, 0) AS "totalVisits",
+          COALESCE(c.total_spent, 0) AS "totalSpent",
+          COALESCE(c.total_spent, 0) / NULLIF(COALESCE(c.total_visits, 0), 0) AS "averageSpend",
+          MAX(t.paid_at) AS "lastVisitDate"
+        FROM customers c
+        INNER JOIN transactions t ON t.customer_id = c.id
+        WHERE c.salon_id = $1
+          AND t.status = 'paid'
+          ${dateFilter}
+        GROUP BY c.id, c.name, c.phone, c.total_visits, c.total_spent
+        ORDER BY "totalSpent" DESC
+        LIMIT 50
+      `,
+      params,
+    );
+
+    const totalCustomers = rows.length;
+    const totalRevenue = rows.reduce(
+      (sum: number, row: any) => sum + Number(row.totalSpent || 0),
+      0,
+    );
+    const totalVisits = rows.reduce(
+      (sum: number, row: any) => sum + Number(row.totalVisits || 0),
+      0,
+    );
+
+    return {
+      salonId,
+      startDate,
+      endDate,
+      totalCustomers,
+      totalRevenue,
+      totalVisits,
+      averageRevenuePerCustomer: totalCustomers > 0 ? totalRevenue / totalCustomers : 0,
+      items: rows.map((row: any) => ({
+        customerId: row.customerId ? Number(row.customerId) : null,
+        customerName: row.customerName,
+        customerPhone: row.customerPhone,
+        totalVisits: Number(row.totalVisits || 0),
+        totalSpent: Number(row.totalSpent || 0),
+        averageSpend: Number(row.averageSpend || 0),
+        lastVisitDate: row.lastVisitDate,
+        revenuePercentage: totalRevenue > 0
+          ? (Number(row.totalSpent || 0) / totalRevenue) * 100
+          : 0,
+      })),
+    };
+  }
 }

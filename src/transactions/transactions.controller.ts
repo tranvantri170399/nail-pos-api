@@ -61,6 +61,32 @@ export class TransactionsController {
     return this.service.getCommissionReport(salonId, date);
   }
 
+  @Get('report/service-popularity')
+  getServicePopularityReport(
+    @CurrentUser() user: any,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('salonId') querySalonId?: string,
+  ) {
+    const salonId = user.type === 'owner' && querySalonId
+      ? Number(querySalonId)
+      : user.salonId;
+    return this.service.getServicePopularityReport(salonId, startDate, endDate);
+  }
+
+  @Get('report/customer-analytics')
+  getCustomerAnalyticsReport(
+    @CurrentUser() user: any,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('salonId') querySalonId?: string,
+  ) {
+    const salonId = user.type === 'owner' && querySalonId
+      ? Number(querySalonId)
+      : user.salonId;
+    return this.service.getCustomerAnalyticsReport(salonId, startDate, endDate);
+  }
+
   @Get('appointment/:id')
   findByAppointment(
     @CurrentUser() user: any,

@@ -12,6 +12,10 @@ import { SalonsModule } from './salons/salons.module';
 import { ServiceCategoriesModule } from './service-categories/service-categories.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { ShiftsModule } from './shifts/shifts.module';
+import { PayrollsModule } from './payrolls/payrolls.module';
+import { WaitingListModule } from './waiting-list/waiting-list.module';
+import { SchedulesModule } from './schedules/schedules.module';
+import { TimeClocksModule } from './time-clocks/time-clocks.module';
 
 @Module({
   imports: [
@@ -51,7 +55,11 @@ import { ShiftsModule } from './shifts/shifts.module';
     ServiceCategoriesModule,
     TransactionsModule,
     ShiftsModule,
-    
+    PayrollsModule,
+    WaitingListModule,
+    SchedulesModule,
+    TimeClocksModule,
+
   ],
 })
 export class AppModule { }
