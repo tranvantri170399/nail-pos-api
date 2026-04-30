@@ -239,7 +239,7 @@ export class TransactionsService {
 
     if (date) query.andWhere(`DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') = :date`, { date });
 
-    query.orderBy('t.paid_at', 'DESC');
+    query.addOrderBy('t.paid_at', 'DESC');
 
     return paginateQueryBuilder(query, pagination);
   }
