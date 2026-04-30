@@ -1,7 +1,7 @@
 // transactions/transactions.service.ts
 import { BadRequestException, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, In } from 'typeorm';
 import { Transaction } from './transaction.entity';
 import { TransactionItem } from './transaction-item.entity';
 import { TransactionPayment } from './transaction-payment.entity';
@@ -231,29 +231,66 @@ export class TransactionsService {
   }
 
   async findBySalon(salonId: number, pagination: PaginationDto, date?: string, startDate?: string, endDate?: string): Promise<PaginatedResult<Transaction>> {
-    const query = this.repo.createQueryBuilder('t')
-      .leftJoinAndSelect('t.items', 'items')
-      .leftJoinAndSelect('t.payments', 'payments')
-      .where('t.salon_id = :salonId', { salonId })
-      .andWhere('t.status = :status', { status: 'paid' });
+    const page = pagination.page ?? 1;
+    const limit = pagination.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    // Build where conditions
+    const where: any = {
+      salonId,
+      status: 'paid',
+    };
+
+    // Add date filter using query builder for complex date conditions
+    let query = this.repo.createQueryBuilder('t');
 
     if (date) {
-      query.andWhere(`DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') = :date`, { date });
+      query = query.andWhere(`DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') = :date`, { date });
     } else if (startDate && endDate) {
-      query.andWhere(`DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') >= :startDate`, { startDate });
-      query.andWhere(`DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') <= :endDate`, { endDate });
+      query = query.andWhere(`DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') >= :startDate`, { startDate });
+      query = query.andWhere(`DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') <= :endDate`, { endDate });
     }
 
-    const result = await paginateQueryBuilder(query, pagination);
+    // Get data without joins first
+    const [data, total] = await query
+      .where('t.salon_id = :salonId', { salonId })
+      .andWhere('t.status = :status', { status: 'paid' })
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
 
-    // Sort in JavaScript to avoid TypeORM orderBy bug with joins
-    result.data.sort((a, b) => {
-      const dateA = a.paidAt ? new Date(a.paidAt).getTime() : 0;
-      const dateB = b.paidAt ? new Date(b.paidAt).getTime() : 0;
-      return dateB - dateA; // DESC
+    // Load relations separately
+    const transactionIds = data.map(t => t.id);
+    const items = await this.dataSource.getRepository(TransactionItem).find({
+      where: { transactionId: In(transactionIds) } as any,
+    });
+    const payments = await this.dataSource.getRepository(TransactionPayment).find({
+      where: { transactionId: In(transactionIds) } as any,
     });
 
-    return result;
+    // Attach relations to transactions
+    const dataWithRelations = data.map(transaction => ({
+      ...transaction,
+      items: items.filter(item => item.transactionId === transaction.id),
+      payments: payments.filter(payment => payment.transactionId === transaction.id),
+    }));
+
+    // Sort by paidAt DESC
+    dataWithRelations.sort((a, b) => {
+      const dateA = a.paidAt ? new Date(a.paidAt).getTime() : 0;
+      const dateB = b.paidAt ? new Date(b.paidAt).getTime() : 0;
+      return dateB - dateA;
+    });
+
+    return {
+      data: dataWithRelations,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findByAppointment(appointmentId: number, salonId?: number): Promise<Transaction> {
