@@ -80,6 +80,7 @@ import { BackupModule } from './backup/backup.module';
               max: config.get<number>('DB_POOL_MAX', 20),
               idleTimeoutMillis: config.get<number>('DB_POOL_IDLE_TIMEOUT', 30000),
               connectionTimeoutMillis: config.get<number>('DB_POOL_CONNECTION_TIMEOUT', 2000),
+              family: 4, // Force IPv4 to avoid ENETUNREACH on Render
             },
           };
         }
