@@ -43,7 +43,10 @@ lerna-debug.log*
 .env.local
 
 # Uploads and backups (generated at runtime)
-uploads/
+# uploads/ - source code needed, only ignore runtime uploads
+uploads/staff/*
+uploads/services/*
+uploads/customers/*
 backups/
 
 # TypeORM data-source (contains DB credentials)
