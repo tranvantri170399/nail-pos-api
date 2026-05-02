@@ -1,12 +1,16 @@
 // transactions/transactions.controller.ts
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { SalonAccessGuard } from '../common/guards/salon-access.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import type { JwtPayload } from '../common/types/jwt-payload.type';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 
+@ApiTags('transactions')
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard, SalonAccessGuard)
 @Controller('transactions')
 export class TransactionsController {
@@ -14,7 +18,9 @@ export class TransactionsController {
   constructor(private readonly service: TransactionsService) {}
 
   @Post()
-  create(@CurrentUser() user: any, @Body() body: CreateTransactionDto) {
+  @ApiOperation({ summary: 'Create a new transaction' })
+  @ApiResponse({ status: 201, description: 'Transaction created successfully' })
+  create(@CurrentUser() user: JwtPayload, @Body() body: CreateTransactionDto) {
     // Enforce salonId from JWT
     const salonId = user.type === 'owner'
       ? (body.salon_id ?? user.salonId)
@@ -23,8 +29,10 @@ export class TransactionsController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Get all transactions for a salon' })
+  @ApiResponse({ status: 200, description: 'Returns paginated transactions' })
   findBySalon(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Query() pagination: PaginationDto,
     @Query('date') date?: string,
     @Query('startDate') startDate?: string,
@@ -38,8 +46,10 @@ export class TransactionsController {
   }
 
   @Get('report')
+  @ApiOperation({ summary: 'Get daily revenue report' })
+  @ApiResponse({ status: 200, description: 'Returns daily report' })
   getDailyReport(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Query('date') date: string,
     @Query('salonId') querySalonId?: string,
   ) {
@@ -50,8 +60,10 @@ export class TransactionsController {
   }
 
   @Get('report/commission')
+  @ApiOperation({ summary: 'Get commission report' })
+  @ApiResponse({ status: 200, description: 'Returns commission report' })
   getCommissionReport(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Query('date') date: string,
     @Query('salonId') querySalonId?: string,
   ) {
@@ -62,8 +74,10 @@ export class TransactionsController {
   }
 
   @Get('report/service-popularity')
+  @ApiOperation({ summary: 'Get service popularity report' })
+  @ApiResponse({ status: 200, description: 'Returns service popularity report' })
   getServicePopularityReport(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('salonId') querySalonId?: string,
@@ -75,8 +89,10 @@ export class TransactionsController {
   }
 
   @Get('report/customer-analytics')
+  @ApiOperation({ summary: 'Get customer analytics report' })
+  @ApiResponse({ status: 200, description: 'Returns customer analytics report' })
   getCustomerAnalyticsReport(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('salonId') querySalonId?: string,
@@ -88,8 +104,10 @@ export class TransactionsController {
   }
 
   @Get('report/payment-method')
+  @ApiOperation({ summary: 'Get payment method report' })
+  @ApiResponse({ status: 200, description: 'Returns payment method report' })
   getPaymentMethodReport(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Query('date') date: string,
     @Query('salonId') querySalonId?: string,
   ) {
@@ -100,15 +118,19 @@ export class TransactionsController {
   }
 
   @Get('appointment/:id')
+  @ApiOperation({ summary: 'Get transaction by appointment ID' })
+  @ApiResponse({ status: 200, description: 'Returns transaction' })
   findByAppointment(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.service.findByAppointment(id, user.salonId);
   }
 
   @Patch(':id/refund')
-  refund(@CurrentUser() user: any, @Param('id', ParseIntPipe) id: number) {
+  @ApiOperation({ summary: 'Refund a transaction' })
+  @ApiResponse({ status: 200, description: 'Transaction refunded successfully' })
+  refund(@CurrentUser() user: JwtPayload, @Param('id', ParseIntPipe) id: number) {
     return this.service.refund(id, user.salonId);
   }
 }

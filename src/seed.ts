@@ -1,7 +1,20 @@
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import * as dotenv from 'dotenv';
+import * as winston from 'winston';
 dotenv.config();
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    winston.format.colorize(),
+    winston.format.printf(({ timestamp, level, message }) => {
+      return `${timestamp} [${level}]: ${message}`;
+    }),
+  ),
+  transports: [new winston.transports.Console()],
+});
 
 import { Owner } from './owners/owner.entity';
 import { Salon } from './salons/salon.entity';
@@ -33,18 +46,18 @@ const AppDataSource = new DataSource({
 
 async function seed() {
   await AppDataSource.initialize();
-  console.log('✅ Connected to database');
+  logger.info('✅ Connected to database');
 
   // ── TRUNCATE (chạy lại seed nhiều lần không bị lỗi) ─────
   await AppDataSource.query(`TRUNCATE TABLE transaction_items, transactions, appointment_services, appointments, services, service_categories, customers, staffs, salons, owners RESTART IDENTITY CASCADE`);
-  console.log('✅ Tables cleared');
+  logger.info('✅ Tables cleared');
 
   // ── PATCH SCHEMA: thêm cột còn thiếu nếu chưa có ────────
   await AppDataSource.query(`ALTER TABLE customers ADD COLUMN IF NOT EXISTS salon_id INTEGER`);
   await AppDataSource.query(`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS salon_id INTEGER`);
   await AppDataSource.query(`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS total_minutes INTEGER NOT NULL DEFAULT 0`);
   await AppDataSource.query(`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS total_price NUMERIC NOT NULL DEFAULT 0`);
-  console.log('✅ Schema patched');
+  logger.info('✅ Schema patched');
 
   // ── OWNER ────────────────────────────────────────────────
   const ownerRepo = AppDataSource.getRepository(Owner);
@@ -57,7 +70,7 @@ async function seed() {
     is_active: true,
   });
   await ownerRepo.save(owner);
-  console.log(`✅ Owner: ${owner.name} (id=${owner.id}) | phone: 0901234567 | pass: Admin@123`);
+  logger.info(`✅ Owner: ${owner.name} (id=${owner.id}) | phone: 0901234567 | pass: Admin@123`);
 
   // ── SALON ────────────────────────────────────────────────
   const salonRepo = AppDataSource.getRepository(Salon);
@@ -76,7 +89,7 @@ async function seed() {
     isActive: true,
   });
   await salonRepo.save(salon);
-  console.log(`✅ Salon: ${salon.name} (id=${salon.id})`);
+  logger.info(`✅ Salon: ${salon.name} (id=${salon.id})`);
 
   // ── STAFFS ───────────────────────────────────────────────
   const staffRepo = AppDataSource.getRepository(Staff);
@@ -100,7 +113,7 @@ async function seed() {
     });
     await staffRepo.save(staff);
     staffs.push(staff);
-    console.log(`✅ Staff: ${staff.name} (id=${staff.id}) | PIN: ${s.pin}`);
+    logger.info(`✅ Staff: ${staff.name} (id=${staff.id}) | PIN: ${s.pin}`);
   }
 
   // ── CUSTOMERS ────────────────────────────────────────────
@@ -124,7 +137,7 @@ async function seed() {
     await customerRepo.save(customer);
     customers.push(customer);
   }
-  console.log(`✅ Customers: ${customers.length} records`);
+  logger.info(`✅ Customers: ${customers.length} records`);
 
   // ── SERVICE CATEGORIES ───────────────────────────────────
   const catRepo = AppDataSource.getRepository(ServiceCategory);
@@ -139,7 +152,7 @@ async function seed() {
     await catRepo.save(cat);
     categories.push(cat);
   }
-  console.log(`✅ Service Categories: ${categories.length} records`);
+  logger.info(`✅ Service Categories: ${categories.length} records`);
 
   // ── SERVICES ─────────────────────────────────────────────
   const serviceRepo = AppDataSource.getRepository(Service);
@@ -170,7 +183,7 @@ async function seed() {
     await serviceRepo.save(svc);
     services.push(svc);
   }
-  console.log(`✅ Services: ${services.length} records`);
+  logger.info(`✅ Services: ${services.length} records`);
 
   // ── APPOINTMENTS ─────────────────────────────────────────
   const apptRepo = AppDataSource.getRepository(Appointment);
@@ -214,7 +227,7 @@ async function seed() {
   await apptSvcRepo.save([
     apptSvcRepo.create({ appointmentId: appt2.id, serviceId: services[4].id, price: services[4].price, durationMinutes: services[4].durationMinutes }),
   ]);
-  console.log(`✅ Appointments: 2 records`);
+  logger.info(`✅ Appointments: 2 records`);
 
   // ── TRANSACTIONS ─────────────────────────────────────────
   const txRepo = AppDataSource.getRepository(Transaction);
@@ -279,18 +292,18 @@ async function seed() {
       commissionAmount: (services[4].price * 20) / 100,
     }),
   ]);
-  console.log(`✅ Transactions: 2 records`);
+  logger.info(`✅ Transactions: 2 records`);
 
   await AppDataSource.destroy();
-  console.log('\n🎉 Seed hoàn tất!');
-  console.log('──────────────────────────────');
-  console.log('🔑 Owner login:  phone=0901234567  password=Admin@123');
-  console.log('👤 Staff 1 PIN:  phone=0911111111  PIN=1234');
-  console.log('👤 Staff 2 PIN:  phone=0922222222  PIN=2345');
-  console.log('👤 Staff 3 PIN:  phone=0933333333  PIN=3456');
+  logger.info('\n🎉 Seed hoàn tất!');
+  logger.info('──────────────────────────────');
+  logger.info('🔑 Owner login:  phone=0901234567  password=Admin@123');
+  logger.info('👤 Staff 1 PIN:  phone=0911111111  PIN=1234');
+  logger.info('👤 Staff 2 PIN:  phone=0922222222  PIN=2345');
+  logger.info('👤 Staff 3 PIN:  phone=0933333333  PIN=3456');
 }
 
 seed().catch((err) => {
-  console.error('❌ Seed failed:', err);
+  logger.error('❌ Seed failed:', err);
   process.exit(1);
 });

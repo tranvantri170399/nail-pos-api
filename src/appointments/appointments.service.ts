@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 import { Appointment } from './appointment.entity';
@@ -18,6 +18,8 @@ const LEGACY_STATUS_MAP: Record<string, (typeof CANONICAL_STATUSES)[number]> = {
 
 @Injectable()
 export class AppointmentsService {
+  private readonly logger = new Logger(AppointmentsService.name);
+
   constructor(
     @InjectRepository(Appointment)
     private repo: Repository<Appointment>,
@@ -172,7 +174,7 @@ export class AppointmentsService {
               salonId,
             );
           } catch (error) {
-            console.error('Failed to create appointment confirmation notification:', error);
+            this.logger.error('Failed to create appointment confirmation notification:', error);
           }
         }, 0);
       }
@@ -199,7 +201,7 @@ export class AppointmentsService {
         try {
           await this.notificationsService.createAppointmentCancellation(id, appointment.salon_id);
         } catch (error) {
-          console.error('Failed to create appointment cancellation notification:', error);
+          this.logger.error('Failed to create appointment cancellation notification:', error);
         }
       }, 0);
     }

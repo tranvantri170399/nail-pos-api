@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../auth/jwt.guard';
 import { SalonAccessGuard } from '../common/guards/salon-access.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import type { JwtPayload } from '../common/types/jwt-payload.type';
 import { ServicesService } from './services.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -16,7 +17,7 @@ export class ServicesController {
   // GET /services?salonId=1 (owner) or auto from JWT (staff)
   @Get()
   findAll(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Query() pagination: PaginationDto,
     @Query('salonId') querySalonId?: string,
   ) {
@@ -34,15 +35,15 @@ export class ServicesController {
 
   // GET /services/:id
   @Get(':id')
-  findOne(@CurrentUser() user: any, @Param('id', ParseIntPipe) id: number) {
+  findOne(@CurrentUser() user: JwtPayload, @Param('id', ParseIntPipe) id: number) {
     return this.service.findOne(id, user.salonId);
   }
 
   // POST /services
   @Post()
-  create(@CurrentUser() user: any, @Body() body: CreateServiceDto) {
+  create(@CurrentUser() user: JwtPayload, @Body() body: CreateServiceDto) {
     const salonId = user.type === 'owner'
-      ? ((body as any).salonId ?? (body as any).salon_id ?? user.salonId)
+      ? (body.salonId ?? user.salonId)
       : user.salonId;
     return this.service.create({ ...body, salonId });
   }
@@ -50,7 +51,7 @@ export class ServicesController {
   // PATCH /services/:id
   @Patch(':id')
   update(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Param('id', ParseIntPipe) id: number,
     @Body() body: UpdateServiceDto,
   ) {
@@ -59,7 +60,7 @@ export class ServicesController {
 
   // DELETE /services/:id
   @Delete(':id')
-  remove(@CurrentUser() user: any, @Param('id', ParseIntPipe) id: number) {
+  remove(@CurrentUser() user: JwtPayload, @Param('id', ParseIntPipe) id: number) {
     return this.service.remove(id, user.salonId);
   }
 }

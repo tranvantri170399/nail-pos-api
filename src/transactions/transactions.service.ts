@@ -1,5 +1,5 @@
 // transactions/transactions.service.ts
-import { BadRequestException, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
 import { Transaction } from './transaction.entity';
@@ -16,6 +16,8 @@ import { Appointment } from '../appointments/appointment.entity';
 
 @Injectable()
 export class TransactionsService {
+  private readonly logger = new Logger(TransactionsService.name);
+
   constructor(
     @InjectRepository(Transaction)
     private repo: Repository<Transaction>,
@@ -236,7 +238,7 @@ export class TransactionsService {
               totalAmount,
             );
           } catch (error) {
-            console.error('Failed to award loyalty points:', error);
+            this.logger.error('Failed to award loyalty points:', error);
           }
         }, 0);
       }

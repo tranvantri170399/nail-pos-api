@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../auth/jwt.guard';
 import { SalonAccessGuard } from '../common/guards/salon-access.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import type { JwtPayload } from '../common/types/jwt-payload.type';
 import { ShiftsService } from './shifts.service';
 import { OpenShiftDto, CloseShiftDto, CashMovementDto } from './dto/shift.dto';
 
@@ -13,13 +14,13 @@ export class ShiftsController {
   constructor(private readonly service: ShiftsService) {}
 
   @Post('open')
-  openShift(@CurrentUser() user: any, @Body() body: OpenShiftDto) {
+  openShift(@CurrentUser() user: JwtPayload, @Body() body: OpenShiftDto) {
     return this.service.openShift(user.salonId, user.id, body.starting_cash);
   }
 
   @Post(':id/close')
   closeShift(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Param('id', ParseIntPipe) id: number,
     @Body() body: CloseShiftDto,
   ) {
@@ -27,13 +28,13 @@ export class ShiftsController {
   }
 
   @Get('current')
-  getCurrentShift(@CurrentUser() user: any) {
+  getCurrentShift(@CurrentUser() user: JwtPayload) {
     return this.service.getCurrentShift(user.salonId);
   }
 
   @Get()
   getShiftHistory(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Query() pagination: PaginationDto,
   ) {
     return this.service.getShiftHistory(user.salonId, pagination);
@@ -41,7 +42,7 @@ export class ShiftsController {
 
   @Get(':id')
   getShiftById(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.service.getShiftById(id, user.salonId);
@@ -49,7 +50,7 @@ export class ShiftsController {
 
   @Post(':id/cash-movement')
   addCashMovement(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Param('id', ParseIntPipe) id: number,
     @Body() body: CashMovementDto,
   ) {
@@ -58,7 +59,7 @@ export class ShiftsController {
 
   @Get(':id/cash-movements')
   getCashMovements(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.service.getCashMovements(id, user.salonId);

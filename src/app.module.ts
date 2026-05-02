@@ -1,6 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CacheModule } from '@nestjs/cache-manager';
+import * as redisStore from 'cache-manager-ioredis';
 import { StaffsModule } from './staffs/staffs.module';
 import { ServicesModule } from './services/services.module';
 import { CustomersModule } from './customers/customers.module';
@@ -19,11 +21,36 @@ import { TimeClocksModule } from './time-clocks/time-clocks.module';
 import { HealthModule } from './health/health.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { LoggingMiddleware } from './common/middleware/logging.middleware';
+import { envValidationSchema } from './common/config/env.validation';
+import { UploadsModule } from './uploads/uploads.module';
+import { BackupModule } from './backup/backup.module';
 
 @Module({
   imports: [
-    // Load .env
-    ConfigModule.forRoot({ isGlobal: true }),
+    // Load .env with validation
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: envValidationSchema,
+      validationOptions: {
+        allowUnknown: true,
+        abortEarly: true,
+      },
+    }),
+
+    // Redis caching - temporarily disabled due to configuration issues
+    // CacheModule.registerAsync({
+    //   imports: [ConfigModule],
+    //   inject: [ConfigService],
+    //   useFactory: (config: ConfigService) => ({
+    //     store: redisStore,
+    //     host: config.get<string>('REDIS_HOST', 'localhost'),
+    //     port: config.get<number>('REDIS_PORT', 6379),
+    //     password: config.get<string>('REDIS_PASSWORD', ''),
+    //     ttl: 3600, // Default TTL: 1 hour
+    //     isGlobal: true,
+    //   }),
+    // }),
 
     // Kết nối PostgreSQL — dùng env variables + migrations
     TypeOrmModule.forRootAsync({
@@ -44,6 +71,13 @@ import { NotificationsModule } from './notifications/notifications.module';
         migrations: ['dist/migrations/*.js'],
         migrationsRun: true, // Tự chạy migration khi app start
         logging: config.get<string>('DB_LOGGING', 'false') === 'true',
+        // Connection pooling configuration
+        poolSize: config.get<number>('DB_POOL_SIZE', 10),
+        extra: {
+          max: config.get<number>('DB_POOL_MAX', 20),
+          idleTimeoutMillis: config.get<number>('DB_POOL_IDLE_TIMEOUT', 30000),
+          connectionTimeoutMillis: config.get<number>('DB_POOL_CONNECTION_TIMEOUT', 2000),
+        },
       }),
     }),
     
@@ -65,7 +99,12 @@ import { NotificationsModule } from './notifications/notifications.module';
     HealthModule,
     LoyaltyModule,
     NotificationsModule,
-
+    UploadsModule,
+    BackupModule,
   ],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggingMiddleware).forRoutes('*');
+  }
+}
