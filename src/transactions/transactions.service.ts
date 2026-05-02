@@ -540,4 +540,45 @@ export class TransactionsService {
       })),
     };
   }
+
+  async getPaymentMethodReport(salonId: number, date: string) {
+    const rows = await this.dataSource.query(
+      `
+        SELECT 
+          tp.payment_method AS "paymentMethod",
+          COUNT(*) AS "transactionCount",
+          COALESCE(SUM(tp.amount), 0) AS "totalAmount"
+        FROM transaction_payments tp
+        INNER JOIN transactions t ON t.id = tp.transaction_id
+        WHERE t.salon_id = $1
+          AND t.status = 'paid'
+          AND DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') = $2
+        GROUP BY tp.payment_method
+        ORDER BY "totalAmount" DESC
+      `,
+      [salonId, date],
+    );
+
+    const totalAmount = rows.reduce(
+      (sum: number, row: any) => sum + Number(row.totalAmount || 0),
+      0,
+    );
+    const totalTransactions = rows.reduce(
+      (sum: number, row: any) => sum + Number(row.transactionCount || 0),
+      0,
+    );
+
+    return {
+      salonId,
+      date,
+      totalAmount,
+      totalTransactions,
+      items: rows.map((row: any) => ({
+        paymentMethod: row.paymentMethod,
+        transactionCount: Number(row.transactionCount || 0),
+        totalAmount: Number(row.totalAmount || 0),
+        percentage: totalAmount > 0 ? (Number(row.totalAmount || 0) / totalAmount) * 100 : 0,
+      })),
+    };
+  }
 }

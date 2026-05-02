@@ -87,6 +87,18 @@ export class TransactionsController {
     return this.service.getCustomerAnalyticsReport(salonId, startDate, endDate);
   }
 
+  @Get('report/payment-method')
+  getPaymentMethodReport(
+    @CurrentUser() user: any,
+    @Query('date') date: string,
+    @Query('salonId') querySalonId?: string,
+  ) {
+    const salonId = user.type === 'owner' && querySalonId
+      ? Number(querySalonId)
+      : user.salonId;
+    return this.service.getPaymentMethodReport(salonId, date);
+  }
+
   @Get('appointment/:id')
   findByAppointment(
     @CurrentUser() user: any,
