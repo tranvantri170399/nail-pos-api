@@ -56,29 +56,58 @@ import { BackupModule } from './backup/backup.module';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres' as const,
-        host: config.get<string>('DB_HOST', 'aws-1-ap-southeast-1.pooler.supabase.com'),
-        port: config.get<number>('DB_PORT', 6543),
-        username: config.get<string>('DB_USERNAME', 'postgres.jxzhloosntfeitpbylzp'),
-        password: config.get<string>('DB_PASSWORD', 'Tposreal1999$$'),
-        database: config.get<string>('DB_DATABASE', 'postgres'),
-        ssl: config.get<string>('DB_SSL', 'true') === 'true'
-          ? { rejectUnauthorized: false }
-          : false,
-        autoLoadEntities: true,
-        synchronize: false, // Dùng migration thay vì synchronize
-        migrations: ['dist/migrations/*.js'],
-        migrationsRun: true, // Tự chạy migration khi app start
-        logging: config.get<string>('DB_LOGGING', 'false') === 'true',
-        // Connection pooling configuration
-        poolSize: config.get<number>('DB_POOL_SIZE', 10),
-        extra: {
-          max: config.get<number>('DB_POOL_MAX', 20),
-          idleTimeoutMillis: config.get<number>('DB_POOL_IDLE_TIMEOUT', 30000),
-          connectionTimeoutMillis: config.get<number>('DB_POOL_CONNECTION_TIMEOUT', 2000),
-        },
-      }),
+      useFactory: (config: ConfigService) => {
+        const databaseUrl = config.get<string>('DATABASE_URL');
+        
+        // If DATABASE_URL is provided (Render), parse it
+        if (databaseUrl) {
+          const url = new URL(databaseUrl);
+          return {
+            type: 'postgres' as const,
+            host: url.hostname,
+            port: parseInt(url.port) || 5432,
+            username: url.username,
+            password: url.password,
+            database: url.pathname.slice(1), // Remove leading /
+            ssl: { rejectUnauthorized: false },
+            autoLoadEntities: true,
+            synchronize: false,
+            migrations: ['dist/migrations/*.js'],
+            migrationsRun: true,
+            logging: config.get<string>('DB_LOGGING', 'false') === 'true',
+            poolSize: config.get<number>('DB_POOL_SIZE', 10),
+            extra: {
+              max: config.get<number>('DB_POOL_MAX', 20),
+              idleTimeoutMillis: config.get<number>('DB_POOL_IDLE_TIMEOUT', 30000),
+              connectionTimeoutMillis: config.get<number>('DB_POOL_CONNECTION_TIMEOUT', 2000),
+            },
+          };
+        }
+        
+        // Otherwise, use individual DB_* variables (local dev)
+        return {
+          type: 'postgres' as const,
+          host: config.get<string>('DB_HOST', 'aws-1-ap-southeast-1.pooler.supabase.com'),
+          port: config.get<number>('DB_PORT', 6543),
+          username: config.get<string>('DB_USERNAME', 'postgres.jxzhloosntfeitpbylzp'),
+          password: config.get<string>('DB_PASSWORD', 'Tposreal1999$$'),
+          database: config.get<string>('DB_DATABASE', 'postgres'),
+          ssl: config.get<string>('DB_SSL', 'true') === 'true'
+            ? { rejectUnauthorized: false }
+            : false,
+          autoLoadEntities: true,
+          synchronize: false,
+          migrations: ['dist/migrations/*.js'],
+          migrationsRun: true,
+          logging: config.get<string>('DB_LOGGING', 'false') === 'true',
+          poolSize: config.get<number>('DB_POOL_SIZE', 10),
+          extra: {
+            max: config.get<number>('DB_POOL_MAX', 20),
+            idleTimeoutMillis: config.get<number>('DB_POOL_IDLE_TIMEOUT', 30000),
+            connectionTimeoutMillis: config.get<number>('DB_POOL_CONNECTION_TIMEOUT', 2000),
+          },
+        };
+      },
     }),
     
     StaffsModule,
