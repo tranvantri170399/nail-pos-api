@@ -7,6 +7,7 @@ import { Staff } from '../staffs/staff.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { PaginationDto, PaginatedResult } from '../common/dto/pagination.dto';
 import { paginateRepository } from '../common/helpers/paginate.helper';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const CANONICAL_STATUSES = ['scheduled', 'in_progress', 'done', 'cancelled', 'no_show'] as const;
 const LEGACY_STATUS_MAP: Record<string, (typeof CANONICAL_STATUSES)[number]> = {
@@ -24,6 +25,7 @@ export class AppointmentsService {
     private appointmentServiceRepo: Repository<AppointmentService>,
     @InjectRepository(Staff)
     private staffRepo: Repository<Staff>,
+    private notificationsService: NotificationsService,
   ) {}
 
   findBySalon(salonId: number, pagination: PaginationDto): Promise<PaginatedResult<Appointment>> {
@@ -161,6 +163,20 @@ export class AppointmentsService {
         await this.recalculateTotals(savedAppointment.id, appointmentServiceRepo, appointmentRepo);
       }
 
+      // Trigger notification for new appointment
+      if (savedAppointment.customer_id) {
+        setTimeout(async () => {
+          try {
+            await this.notificationsService.createAppointmentConfirmation(
+              savedAppointment.id,
+              salonId,
+            );
+          } catch (error) {
+            console.error('Failed to create appointment confirmation notification:', error);
+          }
+        }, 0);
+      }
+
       return appointmentRepo.findOne({
         where: { id: savedAppointment.id },
         relations: ['staff', 'customer', 'appointmentServices', 'appointmentServices.service'],
@@ -174,7 +190,20 @@ export class AppointmentsService {
     if (salonId && appointment.salon_id !== salonId) {
       throw new ForbiddenException('Appointment does not belong to your salon');
     }
-    await this.repo.update(id, { status: this.normalizeStatus(status) });
+    const normalizedStatus = this.normalizeStatus(status);
+    await this.repo.update(id, { status: normalizedStatus });
+
+    // Trigger notification for cancelled appointments
+    if (normalizedStatus === 'cancelled' && appointment.customer_id) {
+      setTimeout(async () => {
+        try {
+          await this.notificationsService.createAppointmentCancellation(id, appointment.salon_id);
+        } catch (error) {
+          console.error('Failed to create appointment cancellation notification:', error);
+        }
+      }, 0);
+    }
+
     return this.repo.findOne({ where: { id } });
   }
 

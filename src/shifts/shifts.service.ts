@@ -106,6 +106,8 @@ export class ShiftsService {
     // Update shift totals
     if (type === 'cash_in') {
       shift.cashInTotal = Number(shift.cashInTotal) + amount;
+    } else if (type === 'safe_drop') {
+      shift.safeDropTotal = Number(shift.safeDropTotal || 0) + amount;
     } else {
       shift.cashOutTotal = Number(shift.cashOutTotal) + amount;
     }

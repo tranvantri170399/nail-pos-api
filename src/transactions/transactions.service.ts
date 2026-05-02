@@ -9,6 +9,7 @@ import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { PaginationDto, PaginatedResult } from '../common/dto/pagination.dto';
 import { paginateQueryBuilder } from '../common/helpers/paginate.helper';
 import { ShiftsService } from '../shifts/shifts.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 import { Salon } from '../salons/salon.entity';
 import { Customer } from '../customers/customer.entity';
 import { Appointment } from '../appointments/appointment.entity';
@@ -26,6 +27,7 @@ export class TransactionsService {
     private appointmentRepo: Repository<Appointment>,
     private dataSource: DataSource,
     private shiftsService: ShiftsService,
+    private loyaltyService: LoyaltyService,
   ) {}
 
   async create(body: CreateTransactionDto): Promise<Transaction> {
@@ -221,6 +223,22 @@ export class TransactionsService {
           })
           .where('id = :id', { id: customerId })
           .execute();
+
+        // ── Loyalty Points: Auto-earn points ───────────────
+        // This is done outside the transaction since it uses its own service
+        // We'll call it after the transaction is committed
+        setTimeout(async () => {
+          try {
+            await this.loyaltyService.earnPoints(
+              customerId,
+              body.salon_id,
+              savedTransaction.id,
+              totalAmount,
+            );
+          } catch (error) {
+            console.error('Failed to award loyalty points:', error);
+          }
+        }, 0);
       }
 
       return manager.findOneOrFail(Transaction, {

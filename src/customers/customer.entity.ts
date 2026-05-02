@@ -26,6 +26,12 @@ export class Customer {
   @Column({ default: 0 })
   total_spent: number;
 
+  @Column({ name: 'loyalty_points', default: 0 })
+  loyaltyPoints: number;
+
+  @Column({ name: 'loyalty_tier', nullable: true })
+  loyaltyTier: string; // 'bronze', 'silver', 'gold', 'platinum'
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 }

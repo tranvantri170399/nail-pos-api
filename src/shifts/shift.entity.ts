@@ -46,6 +46,9 @@ export class Shift {
   @Column({ name: 'cash_out_total', type: 'numeric', default: 0 })
   cashOutTotal: number;
 
+  @Column({ name: 'safe_drop_total', type: 'numeric', default: 0 })
+  safeDropTotal: number;
+
   @Column({ name: 'cash_difference', type: 'numeric', nullable: true })
   cashDifference: number;
 

@@ -17,6 +17,8 @@ import { WaitingListModule } from './waiting-list/waiting-list.module';
 import { SchedulesModule } from './schedules/schedules.module';
 import { TimeClocksModule } from './time-clocks/time-clocks.module';
 import { HealthModule } from './health/health.module';
+import { LoyaltyModule } from './loyalty/loyalty.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -61,6 +63,8 @@ import { HealthModule } from './health/health.module';
     SchedulesModule,
     TimeClocksModule,
     HealthModule,
+    LoyaltyModule,
+    NotificationsModule,
 
   ],
 })

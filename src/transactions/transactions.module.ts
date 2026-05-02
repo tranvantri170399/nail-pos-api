@@ -7,6 +7,7 @@ import { TransactionPayment } from './transaction-payment.entity';
 import { TransactionsController } from './transactions.controller';
 import { TransactionsService } from './transactions.service';
 import { ShiftsModule } from '../shifts/shifts.module';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { Salon } from '../salons/salon.entity';
 import { Customer } from '../customers/customer.entity';
 import { Appointment } from '../appointments/appointment.entity';
@@ -15,6 +16,7 @@ import { Appointment } from '../appointments/appointment.entity';
   imports: [
     TypeOrmModule.forFeature([Transaction, TransactionItem, TransactionPayment, Salon, Customer, Appointment]),
     ShiftsModule,
+    LoyaltyModule,
   ],
   controllers: [TransactionsController],
   providers: [TransactionsService],

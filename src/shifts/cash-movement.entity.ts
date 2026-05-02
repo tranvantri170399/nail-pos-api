@@ -17,7 +17,7 @@ export class CashMovement {
   staffId: number;
 
   @Column()
-  type: string; // 'cash_in' | 'cash_out'
+  type: string; // 'cash_in' | 'cash_out' | 'safe_drop'
 
   @Column({ type: 'numeric' })
   amount: number;
