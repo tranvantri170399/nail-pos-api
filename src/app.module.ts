@@ -57,18 +57,22 @@ import { BackupModule } from './backup/backup.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const databaseUrl = config.get<string>('DATABASE_URL');
+        // Try Render individual variables first (avoid IPv6 issues with DATABASE_URL)
+        const renderHost = config.get<string>('DATABASE_HOST');
+        const renderPort = config.get<string>('DATABASE_PORT');
+        const renderUser = config.get<string>('DATABASE_USERNAME');
+        const renderPass = config.get<string>('DATABASE_PASSWORD');
+        const renderDb = config.get<string>('DATABASE_NAME');
         
-        // If DATABASE_URL is provided (Render), parse it
-        if (databaseUrl) {
-          const url = new URL(databaseUrl);
+        if (renderHost && renderUser && renderPass) {
+          // Use Render individual variables
           return {
             type: 'postgres' as const,
-            host: url.hostname,
-            port: parseInt(url.port) || 5432,
-            username: url.username,
-            password: url.password,
-            database: url.pathname.slice(1), // Remove leading /
+            host: renderHost,
+            port: parseInt(renderPort || '5432', 10),
+            username: renderUser,
+            password: renderPass,
+            database: renderDb || 'postgres',
             ssl: { rejectUnauthorized: false },
             autoLoadEntities: true,
             synchronize: false,
@@ -80,12 +84,37 @@ import { BackupModule } from './backup/backup.module';
               max: config.get<number>('DB_POOL_MAX', 20),
               idleTimeoutMillis: config.get<number>('DB_POOL_IDLE_TIMEOUT', 30000),
               connectionTimeoutMillis: config.get<number>('DB_POOL_CONNECTION_TIMEOUT', 2000),
-              family: 4, // Force IPv4 to avoid ENETUNREACH on Render
             },
           };
         }
         
-        // Otherwise, use individual DB_* variables (local dev)
+        // Otherwise, try DATABASE_URL
+        const databaseUrl = config.get<string>('DATABASE_URL');
+        if (databaseUrl) {
+          const url = new URL(databaseUrl);
+          return {
+            type: 'postgres' as const,
+            host: url.hostname,
+            port: parseInt(url.port) || 5432,
+            username: url.username,
+            password: url.password,
+            database: url.pathname.slice(1),
+            ssl: { rejectUnauthorized: false },
+            autoLoadEntities: true,
+            synchronize: false,
+            migrations: ['dist/migrations/*.js'],
+            migrationsRun: true,
+            logging: config.get<string>('DB_LOGGING', 'false') === 'true',
+            poolSize: config.get<number>('DB_POOL_SIZE', 10),
+            extra: {
+              max: config.get<number>('DB_POOL_MAX', 20),
+              idleTimeoutMillis: config.get<number>('DB_POOL_IDLE_TIMEOUT', 30000),
+              connectionTimeoutMillis: config.get<number>('DB_POOL_CONNECTION_TIMEOUT', 2000),
+            },
+          };
+        }
+        
+        // Fallback to individual DB_* variables (local dev)
         return {
           type: 'postgres' as const,
           host: config.get<string>('DB_HOST', 'aws-1-ap-southeast-1.pooler.supabase.com'),
