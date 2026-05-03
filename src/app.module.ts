@@ -2,6 +2,8 @@ import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { StaffsModule } from './staffs/staffs.module';
 import { ServicesModule } from './services/services.module';
 import { CustomersModule } from './customers/customers.module';
@@ -26,6 +28,8 @@ import { UploadsModule } from './uploads/uploads.module';
 import { BackupModule } from './backup/backup.module';
 
 @Module({
+  controllers: [AppController],
+  providers: [AppService],
   imports: [
     // Load .env with validation
     ConfigModule.forRoot({
