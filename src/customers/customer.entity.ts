@@ -1,6 +1,7 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, Index } from 'typeorm';
 
 @Entity('customers')
+@Index(['salon_id'])
 export class Customer {
   @PrimaryGeneratedColumn()
   id: number;
@@ -11,7 +12,7 @@ export class Customer {
   @Column()
   name: string;
 
-  @Column({ nullable: true, unique: true })
+  @Column({ nullable: true })
   phone: string;
 
   @Column({ nullable: true })
@@ -23,7 +24,7 @@ export class Customer {
   @Column({ default: 0 })
   total_visits: number;
 
-  @Column({ default: 0 })
+  @Column({ type: 'numeric', precision: 15, scale: 2, default: 0 })
   total_spent: number;
 
   @Column({ name: 'loyalty_points', default: 0 })

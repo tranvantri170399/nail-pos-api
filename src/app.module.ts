@@ -1,8 +1,7 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CacheModule } from '@nestjs/cache-manager';
-import * as redisStore from 'cache-manager-ioredis';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { StaffsModule } from './staffs/staffs.module';
 import { ServicesModule } from './services/services.module';
 import { CustomersModule } from './customers/customers.module';
@@ -37,7 +36,12 @@ import { BackupModule } from './backup/backup.module';
         abortEarly: true,
       },
     }),
-
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 60 seconds
+        limit: 100, // 100 requests per minute
+      },
+    ]),
     // Redis caching - temporarily disabled due to configuration issues
     // CacheModule.registerAsync({
     //   imports: [ConfigModule],

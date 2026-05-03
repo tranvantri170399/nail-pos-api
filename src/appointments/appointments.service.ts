@@ -39,8 +39,9 @@ export class AppointmentsService {
   }
 
   findByDate(salonId: number, date: string) {
+    const dateObj = new Date(date);
     return this.repo.find({
-      where: { salon_id: salonId, scheduled_date: date },
+      where: { salon_id: salonId, scheduled_date: dateObj },
       relations: ['staff', 'customer', 'appointmentServices', 'appointmentServices.service'],
       order: { start_time: 'ASC' },
     });
@@ -121,7 +122,7 @@ export class AppointmentsService {
         where: {
           salon_id: salonId,
           staff_id: staff.id,
-          scheduled_date: data.scheduled_date,
+          scheduled_date: new Date(data.scheduled_date),
         },
         order: { start_time: 'ASC' },
       });
@@ -138,7 +139,7 @@ export class AppointmentsService {
         customer_id: data.customer_id,
         staff_id: data.staff_id,
         salon_id: salonId,
-        scheduled_date: data.scheduled_date,
+        scheduled_date: new Date(data.scheduled_date),
         start_time: data.start_time,
         end_time: data.end_time,
         total_minutes: data.total_minutes,

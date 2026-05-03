@@ -1,9 +1,13 @@
 // transactions/transaction.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, Index } from 'typeorm';
 import { TransactionItem } from './transaction-item.entity';
 import { TransactionPayment } from './transaction-payment.entity';
 
 @Entity('transactions')
+@Index(['salonId'])
+@Index(['appointmentId'])
+@Index(['shiftId'])
+@Index(['customerId'])
 export class Transaction {
   @PrimaryGeneratedColumn()
   id: number;
@@ -20,34 +24,34 @@ export class Transaction {
   @Column({ name: 'customer_id', nullable: true })
   customerId: number;
 
-  @Column({ type: 'numeric', default: 0 })
+  @Column({ type: 'numeric', precision: 15, scale: 2, default: 0 })
   subtotal: number;
 
   // ── Discount ──────────────────────────────────
   @Column({ name: 'discount_type', nullable: true })
   discountType: string; // 'percentage' | 'fixed' | null
 
-  @Column({ name: 'discount_value', type: 'numeric', default: 0 })
+  @Column({ name: 'discount_value', type: 'numeric', precision: 15, scale: 2, default: 0 })
   discountValue: number; // raw value: 10 = 10% or 50000
 
-  @Column({ name: 'discount_amount', type: 'numeric', default: 0 })
+  @Column({ name: 'discount_amount', type: 'numeric', precision: 15, scale: 2, default: 0 })
   discountAmount: number; // computed amount
 
   @Column({ name: 'discount_reason', nullable: true })
   discountReason: string;
 
   // ── Tax ───────────────────────────────────────
-  @Column({ name: 'tax_rate', type: 'numeric', default: 0 })
+  @Column({ name: 'tax_rate', type: 'numeric', precision: 5, scale: 2, default: 0 })
   taxRate: number; // snapshot of salon's tax rate at time of transaction
 
-  @Column({ name: 'tax_amount', type: 'numeric', default: 0 })
+  @Column({ name: 'tax_amount', type: 'numeric', precision: 15, scale: 2, default: 0 })
   taxAmount: number;
 
   // ── Tip ───────────────────────────────────────
-  @Column({ name: 'tip_amount', type: 'numeric', default: 0 })
+  @Column({ name: 'tip_amount', type: 'numeric', precision: 15, scale: 2, default: 0 })
   tipAmount: number;
 
-  @Column({ name: 'total_amount', type: 'numeric', default: 0 })
+  @Column({ name: 'total_amount', type: 'numeric', precision: 15, scale: 2, default: 0 })
   totalAmount: number;
 
   // ── Payment ───────────────────────────────────

@@ -1,13 +1,14 @@
 // staffs/staff.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
 
 @Entity('staffs')
+@Index(['salonId'])
 export class Staff {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'salon_id', nullable: true })
-  salonId: number;  // ← phải có field này
+  @Column({ name: 'salon_id', nullable: false })
+  salonId: number;  // ← required field
 
   @Column()
   name: string;
@@ -24,7 +25,7 @@ export class Staff {
   @Column({ default: 'junior' })
   role: string;
 
-  @Column({ name: 'commission_rate', type: 'numeric', default: 0 })
+  @Column({ name: 'commission_rate', type: 'numeric', precision: 5, scale: 2, default: 0 })
   commissionRate: number;
 
   @Column({ name: 'is_active', default: true })

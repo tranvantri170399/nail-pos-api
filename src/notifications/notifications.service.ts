@@ -218,7 +218,7 @@ export class NotificationsService {
 
     const appointments = await this.appointmentRepo.find({
       where: {
-        scheduled_date: tomorrow.toISOString().split('T')[0],
+        scheduled_date: tomorrow,
         status: 'scheduled',
       },
       relations: ['customer'],

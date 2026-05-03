@@ -1,9 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn, OneToMany, Index } from 'typeorm';
 import { Staff } from '../staffs/staff.entity';
 import { Customer } from '../customers/customer.entity';
 import { AppointmentService } from '../appointment-services/appointment-service.entity';
 
 @Entity('appointments')
+@Index(['salon_id'])
+@Index(['customer_id'])
+@Index(['staff_id'])
 export class Appointment {
   @PrimaryGeneratedColumn()
   id: number;
@@ -17,8 +20,8 @@ export class Appointment {
   @Column({ name: 'salon_id', nullable: true })
   salon_id: number;
 
-  @Column()
-  scheduled_date: string;
+  @Column({ type: 'date', nullable: true })
+  scheduled_date: Date;
 
   @Column()
   start_time: string;
@@ -32,7 +35,7 @@ export class Appointment {
   @Column({ default: 0 })
   buffer_minutes: number;
 
-  @Column('numeric')
+  @Column({ type: 'numeric', precision: 15, scale: 2 })
   total_price: number;
 
   @Column({ default: 'scheduled' })

@@ -1,8 +1,10 @@
 // services/service.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { ServiceCategory } from '../service-categories/service-category.entity';
 
 @Entity('services')
+@Index(['salonId'])
+@Index(['categoryId'])
 export class Service {
   @PrimaryGeneratedColumn()
   id: number;
@@ -16,7 +18,7 @@ export class Service {
   @Column()
   name: string;
 
-  @Column({ type: 'numeric' })
+  @Column({ type: 'numeric', precision: 15, scale: 2 })
   price: number;
 
   @Column({ name: 'duration_minutes' })
