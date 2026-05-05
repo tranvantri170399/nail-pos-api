@@ -1,7 +1,7 @@
 // src/payrolls/payrolls.service.ts
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Payroll } from './payroll.entity';
 import { CreatePayrollDto, UpdatePayrollDto } from './dto/create-payroll.dto';
 
@@ -10,6 +10,7 @@ export class PayrollsService {
   constructor(
     @InjectRepository(Payroll)
     private repo: Repository<Payroll>,
+    private dataSource: DataSource,
   ) {}
 
   async create(salonId: number, body: CreatePayrollDto): Promise<Payroll> {
@@ -73,23 +74,140 @@ export class PayrollsService {
     await this.repo.remove(payroll);
   }
 
-  async generateCommissionPayroll(salonId: number, staffId: number, startDate: string, endDate: string): Promise<Payroll> {
-    // Calculate commission from transactions for the period
-    // This would query transaction_items and sum commission_amount + tip_amount
-    // For now, return a placeholder
-    const totalAmount = 0;
+  /**
+   * Tính commission & tip thực tế từ transaction_items cho 1 staff trong khoảng thời gian
+   * rồi tạo hoặc cập nhật Payroll record.
+   */
+  async generateCommissionPayroll(
+    salonId: number,
+    staffId: number,
+    startDate: string,
+    endDate: string,
+  ): Promise<Payroll> {
+    const rows = await this.dataSource.query(
+      `
+        SELECT
+          COALESCE(SUM(ti.commission_amount), 0) AS total_commission,
+          COALESCE(SUM(ti.tip_amount), 0)        AS total_tip
+        FROM transaction_items ti
+        INNER JOIN transactions t ON t.id = ti.transaction_id
+        WHERE t.salon_id = $1
+          AND ti.staff_id = $2
+          AND t.status = 'paid'
+          AND DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') >= $3
+          AND DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') <= $4
+      `,
+      [salonId, staffId, startDate, endDate],
+    );
+
+    const totalCommission = Number(rows[0]?.total_commission ?? 0);
+    const totalTip = Number(rows[0]?.total_tip ?? 0);
+    const totalAmount = totalCommission + totalTip;
 
     const payroll = this.repo.create({
       salon_id: salonId,
       staff_id: staffId,
-      commission_amount: 0,
-      tip_amount: 0,
+      commission_amount: totalCommission,
+      tip_amount: totalTip,
       total_amount: totalAmount,
       period_start: new Date(startDate),
       period_end: new Date(endDate),
       status: 'pending',
-      notes: 'Auto-generated from commission report',
+      notes: `Auto-generated: ${startDate} → ${endDate}`,
     });
     return this.repo.save(payroll);
+  }
+
+  /**
+   * Tạo payroll cho TẤT CẢ staff có giao dịch trong khoảng thời gian.
+   * Trả về danh sách payroll đã tạo.
+   */
+  async generateAllStaffPayroll(
+    salonId: number,
+    startDate: string,
+    endDate: string,
+  ): Promise<Payroll[]> {
+    // Lấy danh sách staff có giao dịch trong kỳ
+    const staffRows = await this.dataSource.query(
+      `
+        SELECT
+          ti.staff_id,
+          s.name AS staff_name,
+          COALESCE(SUM(ti.commission_amount), 0) AS total_commission,
+          COALESCE(SUM(ti.tip_amount), 0)        AS total_tip
+        FROM transaction_items ti
+        INNER JOIN transactions t ON t.id = ti.transaction_id
+        LEFT JOIN staffs s ON s.id = ti.staff_id
+        WHERE t.salon_id = $1
+          AND ti.staff_id IS NOT NULL
+          AND t.status = 'paid'
+          AND DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') >= $2
+          AND DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') <= $3
+        GROUP BY ti.staff_id, s.name
+        ORDER BY total_commission DESC
+      `,
+      [salonId, startDate, endDate],
+    );
+
+    if (staffRows.length === 0) {
+      return [];
+    }
+
+    // Tạo payroll records cho từng staff
+    const payrolls = staffRows.map((row: any) => {
+      const commission = Number(row.total_commission);
+      const tip = Number(row.total_tip);
+      return this.repo.create({
+        salon_id: salonId,
+        staff_id: Number(row.staff_id),
+        commission_amount: commission,
+        tip_amount: tip,
+        total_amount: commission + tip,
+        period_start: new Date(startDate),
+        period_end: new Date(endDate),
+        status: 'pending',
+        notes: `Auto-generated: ${startDate} → ${endDate}`,
+      });
+    });
+
+    return this.repo.save(payrolls);
+  }
+
+  /**
+   * Preview commission cho tất cả staff (không lưu DB) — dùng cho dialog confirm
+   */
+  async previewAllStaffCommission(
+    salonId: number,
+    startDate: string,
+    endDate: string,
+  ): Promise<Array<{ staffId: number; staffName: string; commission: number; tip: number; total: number }>> {
+    const rows = await this.dataSource.query(
+      `
+        SELECT
+          ti.staff_id     AS "staffId",
+          s.name          AS "staffName",
+          COALESCE(SUM(ti.commission_amount), 0) AS commission,
+          COALESCE(SUM(ti.tip_amount), 0)        AS tip
+        FROM transaction_items ti
+        INNER JOIN transactions t ON t.id = ti.transaction_id
+        LEFT JOIN staffs s ON s.id = ti.staff_id
+        WHERE t.salon_id = $1
+          AND ti.staff_id IS NOT NULL
+          AND t.status = 'paid'
+          AND DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') >= $2
+          AND DATE(t.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh') <= $3
+        GROUP BY ti.staff_id, s.name
+        ORDER BY commission DESC
+      `,
+      [salonId, startDate, endDate],
+    );
+
+    return rows.map((row: any) => ({
+      staffId: Number(row.staffId),
+      staffName: row.staffName ?? 'Unknown',
+      commission: Number(row.commission),
+      tip: Number(row.tip),
+      total: Number(row.commission) + Number(row.tip),
+    }));
   }
 }

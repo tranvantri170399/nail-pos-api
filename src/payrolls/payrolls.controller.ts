@@ -51,6 +51,7 @@ export class PayrollsController {
     return this.service.remove(id, user.salonId);
   }
 
+  /** Tạo payroll cho 1 staff cụ thể */
   @Post('generate')
   generateCommissionPayroll(
     @CurrentUser() user: any,
@@ -61,6 +62,33 @@ export class PayrollsController {
       body.staffId,
       body.startDate,
       body.endDate,
+    );
+  }
+
+  /** Tạo payroll cho TẤT CẢ staff có giao dịch trong kỳ */
+  @Post('generate-all')
+  generateAllStaffPayroll(
+    @CurrentUser() user: any,
+    @Body() body: { startDate: string; endDate: string },
+  ) {
+    return this.service.generateAllStaffPayroll(
+      user.salonId,
+      body.startDate,
+      body.endDate,
+    );
+  }
+
+  /** Preview commission (không lưu DB) — dùng trước khi confirm tạo payroll */
+  @Get('preview')
+  previewAllStaffCommission(
+    @CurrentUser() user: any,
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return this.service.previewAllStaffCommission(
+      user.salonId,
+      startDate,
+      endDate,
     );
   }
 }
