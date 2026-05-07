@@ -32,6 +32,20 @@ export class PayrollsController {
     return this.service.findByStaff(user.salonId, staffId);
   }
 
+  /** Preview commission (không lưu DB) — dùng trước khi confirm tạo payroll */
+  @Get('preview')
+  previewAllStaffCommission(
+    @CurrentUser() user: any,
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return this.service.previewAllStaffCommission(
+      user.salonId,
+      startDate,
+      endDate,
+    );
+  }
+
   @Get(':id')
   findOne(@CurrentUser() user: any, @Param('id', ParseIntPipe) id: number) {
     return this.service.findOne(id, user.salonId);
@@ -78,17 +92,6 @@ export class PayrollsController {
     );
   }
 
-  /** Preview commission (không lưu DB) — dùng trước khi confirm tạo payroll */
-  @Get('preview')
-  previewAllStaffCommission(
-    @CurrentUser() user: any,
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
-  ) {
-    return this.service.previewAllStaffCommission(
-      user.salonId,
-      startDate,
-      endDate,
-    );
   }
+
 }
