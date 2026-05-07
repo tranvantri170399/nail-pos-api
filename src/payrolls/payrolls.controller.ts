@@ -91,7 +91,4 @@ export class PayrollsController {
       body.endDate,
     );
   }
-
-  }
-
 }
